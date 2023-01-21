@@ -3,6 +3,7 @@ module nft_protocol::bottle {
 
     use sui::sui::SUI;
     use sui::coin;
+    use sui::balance::{Self, Balance};
     use sui::object::{Self, UID};
     use sui::url;
     use sui::transfer;
@@ -28,6 +29,7 @@ module nft_protocol::bottle {
         id: UID,
         active: bool,
         price: u64,
+        balance: Balance<SUI>,
     }
 
 
@@ -51,7 +53,7 @@ module nft_protocol::bottle {
         display::add_collection_url_domain(
             &mut collection,
             &mut mint_cap,
-            sui::url::new_unsafe_from_bytes(b"https://halcyon.builders/"),
+            url::new_unsafe_from_bytes(b"https://halcyon.builders/"),
         );
         display::add_collection_symbol_domain(
             &mut collection,
@@ -79,6 +81,7 @@ module nft_protocol::bottle {
                 id: object::new(ctx),
                 active: false,
                 price: 5000000,
+                balance: balance::zero(),
             }
         );
         transfer::transfer(col_cap, tx_context::sender(ctx));
@@ -98,8 +101,12 @@ module nft_protocol::bottle {
     ) {
         assert!(dispenser.active, ESaleInactive);
         assert!(coin::value(funds) >= dispenser.price, EFundsInsufficient);
-        let rand_nb = rand_u64_range_no_counter(&tx_context::sender(ctx), 0, 4, ctx);
 
+        let balance = coin::balance_mut(funds);
+        let amount = balance::split(balance, dispenser.price);
+        balance::join(&mut dispenser.balance, amount);
+
+        let rand_nb = rand_u64_range_no_counter(&tx_context::sender(ctx), 0, 4, ctx);
         if (rand_nb < 1) {
             send_filled(tx_context::sender(ctx), _mint_cap, ctx);
         } else {
@@ -191,10 +198,25 @@ module nft_protocol::bottle {
         dispenser.price = price;
     }
 
+    public entry fun collect_profits(
+        _: &Admin<BOTTLE>,
+        dispenser: &mut Dispenser<BOTTLE>,
+        receiver: address,
+        ctx: &mut TxContext
+    ) {
+        let amount = balance::value(&dispenser.balance);
+        let profits = coin::take(&mut dispenser.balance, amount, ctx);
+
+        transfer::transfer(profits, receiver)
+    }
+
     // ------------- tests ---------------
 
     #[test_only]
     use sui::test_scenario as test;
+
+    #[test_only]
+    const EWrongBalance: u64 = 10;
 
     #[test]
     fun test_mint_nft() {
@@ -213,10 +235,16 @@ module nft_protocol::bottle {
             let mint_cap = test::take_shared<MintCap<BOTTLE>>(scenario);
 
             let coin = coin::mint_for_testing<SUI>(1000000000, test::ctx(scenario));
-
+            assert!(balance::value(&dispenser.balance) == 0, 10);
             activate_sale(&admin_cap, &mut dispenser, test::ctx(scenario));
+
             mint_rand_bottle(&mint_cap, &mut dispenser, &mut coin, test::ctx(scenario));
-            
+            assert!(balance::value(&dispenser.balance) == 5000000, 10);
+
+            set_price(&admin_cap, &mut dispenser, 10000000, test::ctx(scenario));
+            mint_rand_bottle(&mint_cap, &mut dispenser, &mut coin, test::ctx(scenario));
+            assert!(balance::value(&dispenser.balance) == 15000000, 10);
+
             test::return_to_address<Admin<BOTTLE>>(admin, admin_cap);
             test::return_shared<Dispenser<BOTTLE>>(dispenser);
             test::return_shared<MintCap<BOTTLE>>(mint_cap);
