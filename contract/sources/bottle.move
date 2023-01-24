@@ -24,9 +24,12 @@ module nft_protocol::bottle {
     const ESaleInactive: u64 = 0;
     const EFundsInsufficient: u64 = 1;
     const ENotVerified: u64 = 2;
-    const ENotValidHexCharacter: u64 = 3;
+    const ENoBottleLeft: u64 = 3;
+    const ENotValidHexCharacter: u64 = 4;
 
     const BURN_ADDRESS: address = @0xaacfea8d66fe120dae87ac8a7924fe5c510f1c3a;
+
+    // TODO: add events (buy_rand, claim, recycle)
 
     struct BOTTLE has drop {}
     struct Witness has drop {}
@@ -36,6 +39,8 @@ module nft_protocol::bottle {
         active: bool,
         price: u64,
         balance: Balance<SUI>,
+        supply: u64,
+        left: u64,
     }
 
 
@@ -92,6 +97,8 @@ module nft_protocol::bottle {
                 active: false,
                 price: 5000000,
                 balance: balance::zero(),
+                supply: 0,
+                left: 0,
             }
         );
         transfer::transfer(col_cap, tx_context::sender(ctx));
@@ -111,6 +118,8 @@ module nft_protocol::bottle {
         ctx: &mut TxContext,
     ) {
         assert!(dispenser.active, ESaleInactive);
+        // if supply == 0, it means there is no limit
+        if (dispenser.supply != 0) {assert!(dispenser.left > 0, ENoBottleLeft);};
         assert!(coin::value(funds) >= dispenser.price, EFundsInsufficient);
 
         let balance = coin::balance_mut(funds);
@@ -118,7 +127,7 @@ module nft_protocol::bottle {
         balance::join(&mut dispenser.balance, amount);
 
         let nft: nft::Nft<BOTTLE>;
-        let rand_nb = rand_u64_range_no_counter(&tx_context::sender(ctx), 0, 4, ctx);
+        let rand_nb = rand_u64_range_no_counter(&tx_context::sender(ctx), 0, 10, ctx);
         if (rand_nb < 1) {
             nft = mint_filled(mint_cap, ctx);
         } else {
@@ -141,7 +150,7 @@ module nft_protocol::bottle {
         magic_nb: u64,
         mint_cap: &MintCap<BOTTLE>,
         opt_safe: option::Option<Safe>,
-        ctx: &mut TxContext
+        ctx: &mut TxContext,
     ) {
         // verification has role on discord
         assert_is_verified(magic_nb, ctx);
@@ -158,6 +167,14 @@ module nft_protocol::bottle {
             safe::deposit_nft(nft, &mut safe, ctx);
         };
         // TODO: managing Safe (creation or borrowing)
+    }
+
+    public entry fun recycle(
+        mint_cap: &MintCap<BOTTLE>,
+        safe: Safe,
+        ctx: &mut TxContext,
+    ) {
+        
     }
 
     fun mint_filled(
@@ -233,6 +250,16 @@ module nft_protocol::bottle {
         _ctx: &mut TxContext
     ) {
         dispenser.price = price;
+    }
+
+    public entry fun set_supply(
+        _: &AdminCap<BOTTLE>, 
+        dispenser: &mut Dispenser<BOTTLE>, 
+        supply: u64,
+        _ctx: &mut TxContext
+    ) {
+        dispenser.supply = supply;
+        dispenser.left = supply;
     }
 
     public entry fun collect_profits(
