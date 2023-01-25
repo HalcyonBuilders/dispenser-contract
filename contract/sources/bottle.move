@@ -1,6 +1,5 @@
 module nft_protocol::bottle {
     use std::string;
-    use std::option;
     use std::vector;
 
     use sui::address;
@@ -18,15 +17,16 @@ module nft_protocol::bottle {
     use nft_protocol::display;
     use nft_protocol::creators;
     use nft_protocol::collection::{Self, MintCap};
-    use nft_protocol::unprotected_safe::{Self as safe, UnprotectedSafe as Safe};
-    use nft_protocol::transfer_allowlist;
 
     const ESaleInactive: u64 = 0;
     const EFundsInsufficient: u64 = 1;
     const ENotVerified: u64 = 2;
-    const ENotValidHexCharacter: u64 = 3;
+    const ENoBottleLeft: u64 = 3;
+    const ENotValidHexCharacter: u64 = 4;
 
     const BURN_ADDRESS: address = @0xaacfea8d66fe120dae87ac8a7924fe5c510f1c3a;
+
+    // TODO: add events (buy_rand, claim, recycle)
 
     struct BOTTLE has drop {}
     struct Witness has drop {}
@@ -36,6 +36,8 @@ module nft_protocol::bottle {
         active: bool,
         price: u64,
         balance: Balance<SUI>,
+        supply: u64,
+        left: u64,
     }
 
 
@@ -67,34 +69,18 @@ module nft_protocol::bottle {
             string::utf8(b"BOTTLES")
         );
 
-        // create allowlist
-        let col_cap = transfer_allowlist::create_collection_cap<BOTTLE, Witness>(
-            &Witness {}, ctx,
-        );
-
-        let allowlist = transfer_allowlist::create(Witness {}, ctx);
-        transfer_allowlist::insert_collection(
-            Witness {},
-            &col_cap,
-            &mut allowlist,
-        );
-        transfer_allowlist::insert_authority<Witness, Witness>(
-            Witness {},
-            &mut allowlist,
-        );
-
         transfer::share_object(collection);
         transfer::share_object(mint_cap);
-        transfer::share_object(allowlist);
         transfer::share_object(
             Dispenser<BOTTLE>{
                 id: object::new(ctx),
                 active: false,
                 price: 5000000,
                 balance: balance::zero(),
+                supply: 0,
+                left: 0,
             }
         );
-        transfer::transfer(col_cap, tx_context::sender(ctx));
         transfer::transfer(
             AdminCap<BOTTLE> {
                 id: object::new(ctx),
@@ -103,67 +89,89 @@ module nft_protocol::bottle {
         );
     }
 
+    // === entry functions ===
+
     public entry fun buy_rand_bottle(
         mint_cap: &MintCap<BOTTLE>,
         dispenser: &mut Dispenser<BOTTLE>,
-        opt_safe: option::Option<Safe>,
         funds: &mut coin::Coin<SUI>,
         ctx: &mut TxContext,
     ) {
         assert!(dispenser.active, ESaleInactive);
+        // if supply == 0, it means there is no limit
+        if (dispenser.supply != 0) {assert!(dispenser.left > 0, ENoBottleLeft);};
         assert!(coin::value(funds) >= dispenser.price, EFundsInsufficient);
 
         let balance = coin::balance_mut(funds);
         let amount = balance::split(balance, dispenser.price);
         balance::join(&mut dispenser.balance, amount);
 
-        let nft: nft::Nft<BOTTLE>;
-        let rand_nb = rand_u64_range_no_counter(&tx_context::sender(ctx), 0, 4, ctx);
-        if (rand_nb < 1) {
-            nft = mint_filled(mint_cap, ctx);
-        } else {
-            nft = mint_empty(mint_cap, ctx);
-        };
-
-        if (option::is_none(&opt_safe)) { 
-            let (safe, cap) = safe::new(ctx); 
-            transfer::transfer(cap, tx_context::sender(ctx));
-            safe::deposit_nft(nft, &mut safe, ctx);
-            transfer::share_object(safe);
-        } else {
-            let safe = option::extract(&mut opt_safe);
-            safe::deposit_nft(nft, &mut safe, ctx);
-        };
-        // TODO: managing Safe (creation or borrowing)
+        if (dispenser.supply != 0) dispenser.left = dispenser.left - 1;
+        mint_and_send_random(mint_cap, ctx);
     }
 
-    public entry fun claim_filled_bottle(
-        magic_nb: u64,
+    public entry fun claim_random_bottle(
         mint_cap: &MintCap<BOTTLE>,
-        opt_safe: option::Option<Safe>,
-        ctx: &mut TxContext
+        magic_nb: u64,
+        ctx: &mut TxContext,
     ) {
         // verification has role on discord
         assert_is_verified(magic_nb, ctx);
 
-        let nft = mint_filled(mint_cap, ctx);
-
-        if (option::is_none(&opt_safe)) { 
-            let (safe, cap) = safe::new(ctx); 
-            transfer::transfer(cap, tx_context::sender(ctx));
-            safe::deposit_nft(nft, &mut safe, ctx);
-            transfer::share_object(safe);
-        } else {
-            let safe = option::extract(&mut opt_safe);
-            safe::deposit_nft(nft, &mut safe, ctx);
-        };
-        // TODO: managing Safe (creation or borrowing)
+        mint_and_send_random(mint_cap, ctx);
     }
 
-    fun mint_filled(
+    public entry fun claim_filled_bottle(
+        mint_cap: &MintCap<BOTTLE>,
+        magic_nb: u64,
+        ctx: &mut TxContext,
+    ) {
+        // verification has role on discord
+        assert_is_verified(magic_nb, ctx);
+
+        mint_and_send_filled(mint_cap, ctx);
+    }
+
+    // public entry fun swap_monkey<T: drop>(nft: nft::Nft<T>, _ctx: &mut TxContext) {
+        
+    // }
+
+    public entry fun recycle(
+        mint_cap: &MintCap<BOTTLE>,
+        b1: nft::Nft<BOTTLE>,
+        b2: nft::Nft<BOTTLE>,
+        b3: nft::Nft<BOTTLE>,
+        b4: nft::Nft<BOTTLE>,
+        b5: nft::Nft<BOTTLE>,
+        ctx: &mut TxContext,
+    ) {
+        transfer::transfer(b1, BURN_ADDRESS);
+        transfer::transfer(b2, BURN_ADDRESS);
+        transfer::transfer(b3, BURN_ADDRESS);
+        transfer::transfer(b4, BURN_ADDRESS);
+        transfer::transfer(b5, BURN_ADDRESS);
+
+        mint_and_send_random(mint_cap, ctx);
+    }
+
+    // === private functions ===
+
+    fun mint_and_send_random(
+        mint_cap: &MintCap<BOTTLE>,
+        ctx: &mut TxContext,
+    ) {
+        let rand_nb = rand_u64_range_no_counter(&tx_context::sender(ctx), 0, 10, ctx);
+        if (rand_nb < 1) {
+            mint_and_send_filled(mint_cap, ctx);
+        } else {
+            mint_and_send_empty(mint_cap, ctx);
+        };
+    }
+
+    fun mint_and_send_filled(
         _mint_cap: &MintCap<BOTTLE>,
         ctx: &mut TxContext,
-    ): nft::Nft<BOTTLE> { 
+    ) { 
         let nft = nft::new<BOTTLE, Witness>(
             &Witness {}, tx_context::sender(ctx), ctx
         );
@@ -175,13 +183,13 @@ module nft_protocol::bottle {
         display::add_display_domain(&mut nft, name, description, ctx);
         display::add_url_domain(&mut nft, url, ctx);
 
-        return nft
+        transfer::transfer(nft, tx_context::sender(ctx));
     }
 
-    fun mint_empty(
+    fun mint_and_send_empty(
         _mint_cap: &MintCap<BOTTLE>,
         ctx: &mut TxContext,
-    ): nft::Nft<BOTTLE> {
+    ) {
         let nft = nft::new<BOTTLE, Witness>(
             &Witness {}, tx_context::sender(ctx), ctx
         );
@@ -193,14 +201,10 @@ module nft_protocol::bottle {
         display::add_display_domain(&mut nft, name, description, ctx);
         display::add_url_domain(&mut nft, url, ctx);
 
-        return nft
+        transfer::transfer(nft, tx_context::sender(ctx));
     }
 
-    // public entry fun swap_monkey<T: drop>(nft: nft::Nft<T>, _ctx: &mut TxContext) {
-        
-    // }
-
-    // admin setup functions
+    // === admin setup functions ===
 
     public entry fun transfer_admin_cap(
         admin: AdminCap<BOTTLE>, 
@@ -235,6 +239,16 @@ module nft_protocol::bottle {
         dispenser.price = price;
     }
 
+    public entry fun set_supply(
+        _: &AdminCap<BOTTLE>, 
+        dispenser: &mut Dispenser<BOTTLE>, 
+        supply: u64,
+        _ctx: &mut TxContext
+    ) {
+        dispenser.supply = supply;
+        dispenser.left = supply;
+    }
+
     public entry fun collect_profits(
         _: &AdminCap<BOTTLE>,
         dispenser: &mut Dispenser<BOTTLE>,
@@ -248,18 +262,6 @@ module nft_protocol::bottle {
     }
 
     // utils
-
-    fun decode_byte(hex: u8): u8 {
-        if (/* 0 .. 9 */ 48 <= hex && hex < 58) {
-            hex - 48
-        } else if (/* A .. F */ 65 <= hex && hex < 71) {
-            10 + hex - 65
-        } else if (/* a .. f */ 97 <= hex && hex < 103) {
-            10 + hex - 97
-        } else {
-            abort ENotValidHexCharacter
-        }
-    }
 
     fun assert_is_verified(magic_nb: u64, ctx: &mut TxContext) {
         let addr_in_bytes = address::to_bytes(tx_context::sender(ctx));
@@ -276,78 +278,87 @@ module nft_protocol::bottle {
 
     #[test_only]
     const EWrongBalance: u64 = 10;
+    const ESetters: u64 = 11;
 
-    // #[test]
-    // fun test_mint_nft() {
-    //     let buyer = @0xBABE;
-    //     let admin = @0xCAFE;
+    #[test]
+    fun test_mint_nft() {
+        let buyer = @0xBABE;
+        let admin = @0xCAFE;
 
-    //     let scenario_val = test::begin(admin);
-    //     let scenario = &mut scenario_val;
-    //     {
-    //         init(BOTTLE{}, test::ctx(scenario));
-    //     };
-    //     test::next_tx(scenario, buyer);
-    //     {
-    //         let admin_cap = test::take_from_address<AdminCap<BOTTLE>>(scenario, admin);
-    //         let dispenser = test::take_shared<Dispenser<BOTTLE>>(scenario);
-    //         let mint_cap = test::take_shared<MintCap<BOTTLE>>(scenario);
+        let scenario_val = test::begin(admin);
+        let scenario = &mut scenario_val;
+        {
+            init(BOTTLE{}, test::ctx(scenario));
+        };
+        test::next_tx(scenario, buyer);
+        {
+            let admin_cap = test::take_from_address<AdminCap<BOTTLE>>(scenario, admin);
+            let dispenser = test::take_shared<Dispenser<BOTTLE>>(scenario);
+            let mint_cap = test::take_shared<MintCap<BOTTLE>>(scenario);
 
-    //         let coin = coin::mint_for_testing<SUI>(1000000000, test::ctx(scenario));
-    //         assert!(balance::value<SUI>(&dispenser.balance) == 0, 10);
-    //         activate_sale(&admin_cap, &mut dispenser, test::ctx(scenario));
+            let coin = coin::mint_for_testing<SUI>(1000000000, test::ctx(scenario));
+            assert!(balance::value<SUI>(&dispenser.balance) == 0, 10);
+            activate_sale(&admin_cap, &mut dispenser, test::ctx(scenario));
 
-    //         buy_rand_bottle(&mint_cap, &mut dispenser, option::none(), &mut coin, test::ctx(scenario));
-    //         assert!(balance::value<SUI>(&dispenser.balance) == 5000000, 10);
+            buy_rand_bottle(&mint_cap, &mut dispenser, &mut coin, test::ctx(scenario));
+            assert!(balance::value<SUI>(&dispenser.balance) == 5000000, 10);
+            claim_filled_bottle(&mint_cap, 35340, test::ctx(scenario));
+            claim_random_bottle(&mint_cap, 35340, test::ctx(scenario));
 
-    //         test::return_to_address<AdminCap<BOTTLE>>(admin, admin_cap);
-    //         test::return_shared<Dispenser<BOTTLE>>(dispenser);
-    //         test::return_shared<MintCap<BOTTLE>>(mint_cap);
-    //         transfer::transfer(coin, buyer);
-    //     };
-    //     test::next_tx(scenario, buyer);
-    //     {
-    //         assert!(test::has_most_recent_for_address<nft::Nft<BOTTLE>>(buyer), 0);
-    //     };
-    //     test::end(scenario_val);
-    // }
+            test::return_to_address<AdminCap<BOTTLE>>(admin, admin_cap);
+            test::return_shared<Dispenser<BOTTLE>>(dispenser);
+            test::return_shared<MintCap<BOTTLE>>(mint_cap);
+            transfer::transfer(coin, buyer);
+        };
+        test::next_tx(scenario, buyer);
+        {
+            assert!(test::has_most_recent_for_address<nft::Nft<BOTTLE>>(buyer), 0);
+        };
+        test::end(scenario_val);
+    }
 
-    // #[test]
-    // fun test_allowlist() {
-    //     let buyer = @0xBABE;
-    //     let admin = @0xCAFE;
+    #[test]
+    fun test_admin_functions() {
+        let buyer = @0xBABE;
+        let admin = @0xCAFE;
 
-    //     let scenario_val = test::begin(admin);
-    //     let scenario = &mut scenario_val;
-    //     {
-    //         init(BOTTLE{}, test::ctx(scenario));
-    //     };
-    //     test::next_tx(scenario, buyer);
-    //     {
-    //         let admin_cap = test::take_from_address<AdminCap<BOTTLE>>(scenario, admin);
-    //         let dispenser = test::take_shared<Dispenser<BOTTLE>>(scenario);
-    //         let mint_cap = test::take_shared<MintCap<BOTTLE>>(scenario);
+        let scenario_val = test::begin(admin);
+        let scenario = &mut scenario_val;
+        {
+            init(BOTTLE{}, test::ctx(scenario));
+        };
+        test::next_tx(scenario, buyer);
+        {
+            let admin_cap = test::take_from_address<AdminCap<BOTTLE>>(scenario, admin);
+            let dispenser = test::take_shared<Dispenser<BOTTLE>>(scenario);
+            let mint_cap = test::take_shared<MintCap<BOTTLE>>(scenario);
 
-    //         let coin = coin::mint_for_testing<SUI>(1000000000, test::ctx(scenario));
-    //         assert!(balance::value<SUI>(&dispenser.balance) == 0, 10);
-    //         activate_sale(&admin_cap, &mut dispenser, test::ctx(scenario));
+            let coin = coin::mint_for_testing<SUI>(1000000000, test::ctx(scenario));
+            assert!(balance::value<SUI>(&dispenser.balance) == 0, 10);
+            activate_sale(&admin_cap, &mut dispenser, test::ctx(scenario));
 
-    //         buy_rand_bottle(&mint_cap, &mut dispenser, &mut coin, test::ctx(scenario));
-    //         assert!(balance::value<SUI>(&dispenser.balance) == 5000000, 10);
+            set_price(&admin_cap, &mut dispenser, 3000000, test::ctx(scenario));
+            set_supply(&admin_cap, &mut dispenser, 2, test::ctx(scenario));
+            assert!(dispenser.price == 3000000 && dispenser.left == 2 && dispenser.supply == 2, 11);
 
-    //         test::return_to_address<AdminCap<BOTTLE>>(admin, admin_cap);
-    //         test::return_shared<Dispenser<BOTTLE>>(dispenser);
-    //         test::return_shared<MintCap<BOTTLE>>(mint_cap);
-    //         transfer::transfer(coin, buyer);
-    //     };
-    //     test::next_tx(scenario, buyer);
-    //     {
-    //         let nft = test::take_from_sender<nft::Nft<BOTTLE>>(scenario);
-    //         transfer::transfer(nft, admin);
-    //         // TODO: needs Safe implementation for allowlist to work
-    //     };
-    //     test::end(scenario_val);
-    // }
+            buy_rand_bottle(&mint_cap, &mut dispenser, &mut coin, test::ctx(scenario));
+            assert!(balance::value<SUI>(&dispenser.balance) == 3000000, 10);
+            buy_rand_bottle(&mint_cap, &mut dispenser, &mut coin, test::ctx(scenario));
+            claim_filled_bottle(&mint_cap, 35340, test::ctx(scenario));
+            claim_random_bottle(&mint_cap, 35340, test::ctx(scenario));
+
+            test::return_to_address<AdminCap<BOTTLE>>(admin, admin_cap);
+            test::return_shared<Dispenser<BOTTLE>>(dispenser);
+            test::return_shared<MintCap<BOTTLE>>(mint_cap);
+            transfer::transfer(coin, buyer);
+        };
+        test::next_tx(scenario, buyer);
+        {
+            assert!(test::has_most_recent_for_address<nft::Nft<BOTTLE>>(buyer), 0);
+        };
+        test::end(scenario_val);
+    }
+
 
     // #[test]
     // fun test_magic_number() {
