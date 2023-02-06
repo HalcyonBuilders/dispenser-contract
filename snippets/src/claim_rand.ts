@@ -1,19 +1,18 @@
-import { package_id, mint_cap, admin_cap, dispenser, monkey, funds, signer } from "./config";
+import { PACKAGE_ID, MINT_CAP, signer } from "./config";
 
 (async () => {
     console.log("running...");
 
     const moveCallTxn = await signer.executeMoveCall({
-        packageObjectId: package_id,
+        packageObjectId: PACKAGE_ID,
         module: "bottle",
         function: "claim_random_bottle",
         typeArguments: [],
         arguments: [
-            mint_cap,
+            MINT_CAP,
             "3870",
         ],
         gasBudget: 10000
     });
     console.log("moveCallTxn", moveCallTxn);
-
 })()

@@ -8,19 +8,18 @@ export const provider = new JsonRpcProvider(Network.DEVNET);
 
 export const signer = new RawSigner(keypair, provider);
 
-
 // ---------------------------------
 
-export const package_id = "0x6dd198675aac7206657d082c63f3f5513d2b3318";
+export const PACKAGE_ID = "0x32b7adf6d37109671ca391afb9657b4d3c89101c";
 
-export const mint_cap = "0xb6f4b36b23862d20439615b325fcfc103fdde1b0";
+export const MINT_CAP = "0xb6fab7b6bfa12e655ffe931c584d2a37db586236";
 
-export const admin_cap = "0x36cef979b78633a2b802761b1278b2891c616071";
+export const ADMIN_CAP = "0x63691f90195b1a7010bfd24b4a4780519c601b6e";
 
-export const dispenser = "0x33150f84dd9f6052dafa528c7d462ef59a2e0321";
+export const DISPENSER = "0xb588d3e462ce562ff59d3bdcc3933152b15c1717";
 
-export const monkey = "0xbe3502f8ab294ada7d28ac2ec6c5fb8ebf47d0fe";
+export const MONKEY = "0x10c7fc80c534962171cf93221f306a448e0b393f";
 
-export const funds = "0x46dfa5be6af6c4c5d34246ff91e5fd0ba666f20b";
+export const FUNDS = "0x437a75ca596575af35911dd4bedd8a578e97b1c4";
 
 // addr: 0x09e26bc2ba60b37e6f06f3961a919da18feb5a2b

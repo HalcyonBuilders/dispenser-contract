@@ -1,15 +1,15 @@
-import { package_id, mint_cap, admin_cap, dispenser, monkey, funds, signer } from "./config";
+import { PACKAGE_ID, MINT_CAP, signer } from "./config";
 
 (async () => {
     console.log("running...");
 
     const moveCallTxn = await signer.executeMoveCall({
-        packageObjectId: package_id,
+        packageObjectId: PACKAGE_ID,
         module: "bottle",
         function: "recycle",
         typeArguments: [],
         arguments: [
-            mint_cap,
+            MINT_CAP,
             "0x06bbd587f6f05d4aac81aadaff9a982f5a587d1b",
             "0x5941764fae3a94c554d04d0dbd92d7c42a3aabcb",
             "0x5a97bbf638cae68c4ae9641f3f58104a5d618774",
@@ -19,5 +19,4 @@ import { package_id, mint_cap, admin_cap, dispenser, monkey, funds, signer } fro
         gasBudget: 10000
     });
     console.log("moveCallTxn", moveCallTxn);
-
 })()

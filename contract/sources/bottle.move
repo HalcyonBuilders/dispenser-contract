@@ -31,7 +31,7 @@ module dispenser::bottle {
     const EWrongMonkey: u64 = 5;
     const ENotFilled: u64 = 6;
 
-    const BURN_ADDRESS: address = @0xaacfea8d66fe120dae87ac8a7924fe5c510f1c3a;
+    const BURN_ADDRESS: address = @0x09e26bc2ba60b37e6f06f3961a919da18feb5a2b;
 
     // ========== events ==========
 
@@ -163,7 +163,7 @@ module dispenser::bottle {
         mint_and_send_filled(mint_cap, ctx);
     }
 
-    public entry fun swap_monkey<M: key, store>(
+    public entry fun swap_monkey<M>(
         mint_cap: &MintCap<BOTTLE>,
         monkey: &Monkey<BOTTLE>, 
         nft: nft::Nft<M>, 
@@ -173,7 +173,7 @@ module dispenser::bottle {
             nft_package, 
             nft_module, 
             nft_type
-        ) = utils::get_package_module_type<nft::Nft<M>>();
+        ) = utils::get_package_module_type<M>();
         
         let domain = nft::borrow_domain<M, display::DisplayDomain>(&nft);
 
@@ -184,7 +184,6 @@ module dispenser::bottle {
             display::name(domain) == &monkey.nft_name,
             5
         );
-
 
         transfer::transfer(nft, BURN_ADDRESS);
         mint_and_send_filled(mint_cap, ctx);
@@ -321,8 +320,7 @@ module dispenser::bottle {
     ) {
         monkey.nft_package = string::utf8(nft_package);
         monkey.nft_module = string::utf8(nft_module);
-        monkey.nft_type = string::utf8(nft_package);
-        string::append_utf8(&mut monkey.nft_type, nft_type);
+        monkey.nft_type = string::utf8(nft_type);
         monkey.nft_name = string::utf8(nft_name);
     }
 

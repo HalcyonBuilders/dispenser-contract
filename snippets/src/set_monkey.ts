@@ -1,23 +1,22 @@
-import { package_id, mint_cap, admin_cap, dispenser, monkey, funds, signer } from "./config";
+import { PACKAGE_ID, ADMIN_CAP, MONKEY, signer } from "./config";
 
 (async () => {
     console.log("running...");
 
     const moveCallTxn = await signer.executeMoveCall({
-        packageObjectId: package_id,
+        packageObjectId: PACKAGE_ID,
         module: "bottle",
         function: "set_monkey",
         typeArguments: [],
         arguments: [
-            admin_cap,
-            monkey,
-            "0x6dd198675aac7206657d082c63f3f5513d2b3318",
+            ADMIN_CAP,
+            MONKEY,
+            "32b7adf6d37109671ca391afb9657b4d3c89101c",
             "bottle",
-            "::bottle::Nft<0x6dd198675aac7206657d082c63f3f5513d2b3318::bottle::BOTTLE>",
+            "BOTTLE",
             "Empty Bottle"
         ],
         gasBudget: 10000
     });
     console.log("moveCallTxn", moveCallTxn);
-
 })()
