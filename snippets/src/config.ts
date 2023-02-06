@@ -11,15 +11,15 @@ export const signer = new RawSigner(keypair, provider);
 
 // ---------------------------------
 
-export const package_id = "0x7084f37e2ef08ee520d41ffcb0b86c86c9c5617b";
+export const package_id = "0x6dd198675aac7206657d082c63f3f5513d2b3318";
 
-export const mint_cap = "0xd9edccf5ff2bffbdae09421920961e4fb76641b7";
+export const mint_cap = "0xb6f4b36b23862d20439615b325fcfc103fdde1b0";
 
-export const admin_cap = "0x001ff2deb8169b662f0554e41f00e19645e00a9a";
+export const admin_cap = "0x36cef979b78633a2b802761b1278b2891c616071";
 
-export const dispenser = "0x52782afd558891cba8bff2f61ed1e881f69fa956";
+export const dispenser = "0x33150f84dd9f6052dafa528c7d462ef59a2e0321";
 
-export const monkey = "0x482aac7993420d9e1a5b5d3ff3e51fa1636ec655";
+export const monkey = "0xbe3502f8ab294ada7d28ac2ec6c5fb8ebf47d0fe";
 
 export const funds = "0x46dfa5be6af6c4c5d34246ff91e5fd0ba666f20b";
 

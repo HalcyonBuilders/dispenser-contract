@@ -11,7 +11,7 @@ import { package_id, mint_cap, admin_cap, dispenser, monkey, funds, signer } fro
         arguments: [
             mint_cap,
             monkey,
-            "0x3e38dd802cd4a84a890ba610c92a21c453bf5cfa",
+            "0x12371f6bd88ca278f6b1ea50149a806d136f889a",
         ],
         gasBudget: 10000
     });

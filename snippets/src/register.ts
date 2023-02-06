@@ -6,15 +6,10 @@ import { package_id, mint_cap, admin_cap, dispenser, monkey, funds, signer } fro
     const moveCallTxn = await signer.executeMoveCall({
         packageObjectId: package_id,
         module: "bottle",
-        function: "set_monkey",
+        function: "register",
         typeArguments: [],
         arguments: [
-            admin_cap,
-            monkey,
-            "0x6dd198675aac7206657d082c63f3f5513d2b3318",
-            "bottle",
-            "::bottle::Nft<0x6dd198675aac7206657d082c63f3f5513d2b3318::bottle::BOTTLE>",
-            "Empty Bottle"
+            "0x12371f6bd88ca278f6b1ea50149a806d136f889a",
         ],
         gasBudget: 10000
     });

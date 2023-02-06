@@ -1,4 +1,4 @@
-module nft_protocol::bottle {
+module dispenser::bottle {
     use std::string;
     use std::vector;
 
@@ -17,7 +17,8 @@ module nft_protocol::bottle {
     use nft_protocol::nft;
     use nft_protocol::display;
     use nft_protocol::creators;
-    use nft_protocol::collection::{Self, MintCap};
+    use nft_protocol::mint_cap::{MintCap};
+    use nft_protocol::collection::{Self};
     use nft_protocol::utils;
 
     // ========== errors ==========
@@ -61,30 +62,33 @@ module nft_protocol::bottle {
 
     fun init(witness: BOTTLE, ctx: &mut TxContext) {
         // create collection
-        let (mint_cap, collection) = collection::create(
-            &witness, ctx,
-        );
+        let (mint_cap, collection) = collection::create(&witness, ctx);
+        let delegated_witness = nft_protocol::witness::from_witness(&witness);
+
         collection::add_domain(
+            delegated_witness,
             &mut collection,
-            &mut mint_cap,
-            creators::from_address(tx_context::sender(ctx))
+            creators::from_address(&witness, tx_context::sender(ctx), ctx)
         );
         // Register custom domains
         display::add_collection_display_domain(
+            delegated_witness,
             &mut collection,
-            &mut mint_cap,
             string::utf8(b"Bottles"),
             string::utf8(b"Filled and empty water bottles earning you a Wetlist for Thirsty Monkeys"),
+            ctx
         );
         display::add_collection_url_domain(
+            delegated_witness,
             &mut collection,
-            &mut mint_cap,
             url::new_unsafe_from_bytes(b"https://halcyon.builders/"),
+            ctx
         );
         display::add_collection_symbol_domain(
+            delegated_witness,
             &mut collection,
-            &mut mint_cap,
-            string::utf8(b"BOTTLES")
+            string::utf8(b"BOTTLES"),
+            ctx
         );
 
         transfer::share_object(collection);
@@ -105,7 +109,7 @@ module nft_protocol::bottle {
                 nft_package: string::utf8(b""),
                 nft_module: string::utf8(b""),
                 nft_type: string::utf8(b""),
-                nft_name: string::utf8(b""),
+                nft_name: string::utf8(b"")
             }
         );
         transfer::transfer(
@@ -230,12 +234,10 @@ module nft_protocol::bottle {
     }
 
     fun mint_and_send_filled(
-        _mint_cap: &MintCap<BOTTLE>,
+        mint_cap: &MintCap<BOTTLE>,
         ctx: &mut TxContext,
     ) { 
-        let nft = nft::new<BOTTLE, Witness>(
-            &Witness {}, tx_context::sender(ctx), ctx
-        );
+        let nft = nft::new<BOTTLE>(mint_cap, tx_context::sender(ctx), ctx);
 
         let name = string::utf8(b"Filled Bottle");
         let description = string::utf8(b"This bottle filled with cool water earn you a Wetlist, go burn it!");
@@ -248,12 +250,10 @@ module nft_protocol::bottle {
     }
 
     fun mint_and_send_empty(
-        _mint_cap: &MintCap<BOTTLE>,
+        mint_cap: &MintCap<BOTTLE>,
         ctx: &mut TxContext,
     ) {
-        let nft = nft::new<BOTTLE, Witness>(
-            &Witness {}, tx_context::sender(ctx), ctx
-        );
+        let nft = nft::new<BOTTLE>(mint_cap, tx_context::sender(ctx), ctx);
 
         let name = string::utf8(b"Empty Bottle");
         let description = string::utf8(b"This bottle is empty and is worth nothing, maybe you could recycle it?");

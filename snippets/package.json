@@ -17,6 +17,7 @@
     "set_supply": "ts-node src/set_supply.ts",
     "set_monkey": "ts-node src/set_monkey.ts",
     "collect": "ts-node src/collect.ts",
+    "register": "ts-node src/register.ts",
     "dev": "tsc --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prettier": "prettier 'src/**/*.ts'"
