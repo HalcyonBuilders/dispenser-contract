@@ -1,4 +1,4 @@
-import { PACKAGE_ID, MINT_CAP, signer } from "./config";
+import { PACKAGE_ID, MINT_CAP, signer } from "../config";
 
 (async () => {
     console.log("running...");

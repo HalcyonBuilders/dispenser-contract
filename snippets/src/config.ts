@@ -1,25 +1,23 @@
-import { Ed25519Keypair, JsonRpcProvider, RawSigner, Network } from "@mysten/sui.js";
+import { Ed25519Keypair, JsonRpcProvider, RawSigner } from "@mysten/sui.js";
 
 export const keypair = Ed25519Keypair.deriveKeypair(
     "stick trend survey toy steel neutral bus hamster delay apple solar vague"
 );
 
-export const provider = new JsonRpcProvider(Network.DEVNET);
+export const provider = new JsonRpcProvider();
 
 export const signer = new RawSigner(keypair, provider);
 
 // ---------------------------------
 
-export const PACKAGE_ID = "0x32b7adf6d37109671ca391afb9657b4d3c89101c";
+export const PACKAGE_ID = "0xaa7bec2916a66f5e4e4c49b9c35d8028589de6a7";
 
-export const MINT_CAP = "0xb6fab7b6bfa12e655ffe931c584d2a37db586236";
+export const MINT_CAP = "0x094e96346971ceaaedb17ae9a4bf0ab441cfc51d";
 
-export const ADMIN_CAP = "0x63691f90195b1a7010bfd24b4a4780519c601b6e";
+export const ADMIN_CAP = "0x6540a624e06376bf2844fd166c353d141d6e9b46";
 
-export const DISPENSER = "0xb588d3e462ce562ff59d3bdcc3933152b15c1717";
+export const DISPENSER = "0x3c94ea6422bc907780358859864fca755089c71e";
 
-export const MONKEY = "0x10c7fc80c534962171cf93221f306a448e0b393f";
-
-export const FUNDS = "0x437a75ca596575af35911dd4bedd8a578e97b1c4";
+export const FUNDS = "0x81678a4e1d6963e7fd597b2c03f9d9d8d93be6e0";
 
 // addr: 0x09e26bc2ba60b37e6f06f3961a919da18feb5a2b

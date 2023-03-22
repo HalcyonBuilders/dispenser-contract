@@ -1,4 +1,4 @@
-import { PACKAGE_ID, ADMIN_CAP, MONKEY, signer } from "./config";
+import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer } from "../config";
 
 (async () => {
     console.log("running...");
@@ -10,8 +10,8 @@ import { PACKAGE_ID, ADMIN_CAP, MONKEY, signer } from "./config";
         typeArguments: [],
         arguments: [
             ADMIN_CAP,
-            MONKEY,
-            "32b7adf6d37109671ca391afb9657b4d3c89101c",
+            DISPENSER,
+            "44bce0a788da82390b569403f6a0ef32e9d28a1a",
             "bottle",
             "BOTTLE",
             "Empty Bottle"

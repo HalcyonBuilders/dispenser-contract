@@ -1,22 +1,10 @@
-import { SuiCertifiedTransactionEffects, CertifiedTransaction } from "@mysten/sui.js";
-import { Infer } from "superstruct";
+import type { OwnedObjectRef } from "@mysten/sui.js";
 import { execSync } from "child_process";
-import { signer, provider } from "./config";
 import * as fs from "fs";
 import { stringify } from "csv";
 
-interface IObjectInfo {
-    id: string
-    type: string
-}
-
-const wait = (ms: number): void => {
-    const date = Date.now();
-    let currentDate: number;
-    do {
-        currentDate = Date.now();
-    } while (currentDate - date < ms);
-};
+import { signer, provider } from "./config";
+import { wait, IObjectInfo } from "./utils";
 
 (async () => {
     console.log("running...");
@@ -33,18 +21,10 @@ const wait = (ms: number): void => {
     );
 
     try {
-        const info = await signer.publish(
-            { compiledModules, gasBudget: 100000 },
-            "WaitForEffectsCert"
-        ) as {
-            EffectsCert: {
-                effects: Infer<typeof SuiCertifiedTransactionEffects>
-                certificate: CertifiedTransaction
-            }
-        };
+        const publishTx = await signer.publish({ compiledModules, gasBudget: 100000 });
 
-        const created = info.EffectsCert.effects.effects.created!.map(
-            (item) => item.reference.objectId
+        const created = (publishTx as any).effects.effects.created.map(
+            (item: OwnedObjectRef) => item.reference.objectId
         );
 
         wait(5000);
@@ -66,7 +46,7 @@ const wait = (ms: number): void => {
             }
         });
 
-        const writableStream = fs.createWriteStream("../created_objects.csv");
+        const writableStream = fs.createWriteStream("./created_objects.csv");
         const stringifier = stringify({ header: true, columns: ["type", "id"] });
 
         for (let i = 0; i < createdObjects.length; i++) {

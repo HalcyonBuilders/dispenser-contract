@@ -1,4 +1,4 @@
-import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer } from "./config";
+import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer } from "../config";
 
 (async () => {
     console.log("running...");
@@ -6,12 +6,12 @@ import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer } from "./config";
     const moveCallTxn = await signer.executeMoveCall({
         packageObjectId: PACKAGE_ID,
         module: "bottle",
-        function: "collect_profits",
+        function: "set_supply",
         typeArguments: [],
         arguments: [
             ADMIN_CAP,
             DISPENSER,
-            "0x09e26bc2ba60b37e6f06f3961a919da18feb5a2b",
+            "0",
         ],
         gasBudget: 10000
     });

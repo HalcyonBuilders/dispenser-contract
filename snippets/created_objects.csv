@@ -1,0 +1,6 @@
+type,id
+0x29695f818a374de28a6d5975b55104cee8f64b9b,bottle::Monkey<0x564fb6c97f3d098e8737fb8b13b6eaf7a6ca6784::bottle::BOTTLE>
+0x570c5109e25bf5af0bde406b45390be794de2c90,bottle::AdminCap<0x564fb6c97f3d098e8737fb8b13b6eaf7a6ca6784::bottle::BOTTLE>
+0x61c6d3e195aa6e5e1c310bbc965c471f1d70e1a6,mint_cap::MintCap<0x564fb6c97f3d098e8737fb8b13b6eaf7a6ca6784::bottle::BOTTLE>
+0xa6c611cbd675e2ba522b2a8542d2b506e0d7066d,bottle::Dispenser<0x564fb6c97f3d098e8737fb8b13b6eaf7a6ca6784::bottle::BOTTLE>
+0xf6f0c8b18a1d0b8ff84deac99e9a0d985eb61915,collection::Collection<0x564fb6c97f3d098e8737fb8b13b6eaf7a6ca6784::bottle::BOTTLE>

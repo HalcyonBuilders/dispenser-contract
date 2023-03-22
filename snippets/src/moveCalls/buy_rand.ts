@@ -1,4 +1,4 @@
-import { PACKAGE_ID, signer } from "./config";
+import { PACKAGE_ID, MINT_CAP, DISPENSER, FUNDS, signer } from "../config";
 
 (async () => {
     console.log("running...");
@@ -6,10 +6,12 @@ import { PACKAGE_ID, signer } from "./config";
     const moveCallTxn = await signer.executeMoveCall({
         packageObjectId: PACKAGE_ID,
         module: "bottle",
-        function: "register",
+        function: "buy_random_bottle",
         typeArguments: [],
         arguments: [
-            "0x12371f6bd88ca278f6b1ea50149a806d136f889a",
+            MINT_CAP,
+            DISPENSER,
+            FUNDS,
         ],
         gasBudget: 10000
     });
