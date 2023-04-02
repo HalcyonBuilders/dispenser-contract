@@ -1,19 +1,23 @@
-import type { OwnedObjectRef } from "@mysten/sui.js";
+import { fromB64, normalizeSuiObjectId, OwnedObjectRef, SuiTransactionBlockResponse } from "@mysten/sui.js";
 import { execSync } from "child_process";
 import * as fs from "fs";
 import { stringify } from "csv";
 
-import { signer, provider } from "./config";
-import { wait, IObjectInfo } from "./utils";
+import { tx, signer, keypair, provider } from "./config";
+
+interface IObjectInfo {
+    id: string | undefined
+    type: string | undefined
+}
 
 (async () => {
     console.log("running...");
-    // await provider.requestSuiFromFaucet("0x09e26bc2ba60b37e6f06f3961a919da18feb5a2b");
 
     const cliPath = "/home/titouanmarchal/.cargo/bin/sui";
     const packagePath = "/home/titouanmarchal/ThounyBreasty/Projects/Sui/Halcyon/Dispenser/contract";
+    const address = keypair.getPublicKey().toSuiAddress();
 
-    const compiledModules = JSON.parse(
+    const compiledModulesAndDeps = JSON.parse(
         execSync(
             `${cliPath} move build --dump-bytecode-as-base64 --path ${packagePath}`,
             { encoding: "utf-8" }
@@ -21,26 +25,52 @@ import { wait, IObjectInfo } from "./utils";
     );
 
     try {
-        const publishTx = await signer.publish({ compiledModules, gasBudget: 100000 });
+        tx.setGasBudget(30000);
 
-        const created = (publishTx as any).effects.effects.created.map(
+        const [upgradeCap] = tx.publish(
+            compiledModulesAndDeps.modules.map((m: any) => Array.from(fromB64(m))),
+            compiledModulesAndDeps.dependencies.map((addr: string) =>
+                normalizeSuiObjectId(addr),
+            ),
+        )
+
+        tx.transferObjects([upgradeCap], tx.pure(address));
+
+        const publishTb: SuiTransactionBlockResponse = await signer.signAndExecuteTransactionBlock({
+            transactionBlock: tx,
+            options: {
+                showEffects: true,
+            },
+            requestType: "WaitForEffectsCert"
+        });
+        console.log("publishTb", JSON.stringify(publishTb, null, 2));
+
+        if (publishTb.effects?.status?.status !== "success") {
+            console.log(publishTb);
+            return;
+        }
+
+        const createdObjectIds = publishTb.effects.created!.map(
             (item: OwnedObjectRef) => item.reference.objectId
         );
 
-        wait(5000);
-        const objectBatch = await provider.getObjectBatch(created);
+        // wait(5000);
+        const createdObjects = await provider.multiGetObjects({
+            ids: createdObjectIds,
+            options: { showContent: true, showType: true, showOwner: true }
+        });
 
         let packageObjectId = "";
-        const createdObjects: IObjectInfo[] = [];
+        const objects: IObjectInfo[] = [];
 
-        objectBatch.forEach((item: any) => {
-            if (item.details.data?.dataType === "package") {
-                packageObjectId = item.details.reference.objectId;
+        createdObjects.forEach((item) => {
+            if (item.data?.type === "package") {
+                packageObjectId = item.data.objectId;
             } else {
-                if (item.details.data.type.startsWith("0x2::") === false) {
-                    createdObjects.push({
-                        id: item.details.reference.objectId,
-                        type: item.details.data?.type.slice(44),
+                if (!item.data!.type!.startsWith("0x2::")) {
+                    objects.push({
+                        id: item.data?.objectId,
+                        type: item.data?.type!.slice(65),
                     });
                 }
             }
@@ -49,8 +79,8 @@ import { wait, IObjectInfo } from "./utils";
         const writableStream = fs.createWriteStream("./created_objects.csv");
         const stringifier = stringify({ header: true, columns: ["type", "id"] });
 
-        for (let i = 0; i < createdObjects.length; i++) {
-            stringifier.write([createdObjects[i].id, createdObjects[i].type]);
+        for (let i = 0; i < objects.length; i++) {
+            stringifier.write([objects[i].id, objects[i].type]);
         }
         stringifier.pipe(writableStream);
 

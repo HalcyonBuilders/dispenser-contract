@@ -1,23 +1,29 @@
-import { Ed25519Keypair, JsonRpcProvider, RawSigner } from "@mysten/sui.js";
+import { Ed25519Keypair, JsonRpcProvider, RawSigner, devnetConnection, TransactionBlock } from "@mysten/sui.js";
+import dotenv from "dotenv";
 
-export const keypair = Ed25519Keypair.deriveKeypair(
-    "stick trend survey toy steel neutral bus hamster delay apple solar vague"
-);
+// export const connection = new Connection({
+//     fullnode: "https://testnet.artifact.systems/sui",
+//     faucet: "",
+// });
 
-export const provider = new JsonRpcProvider();
+dotenv.config();
+
+export const keypair = Ed25519Keypair.fromSecretKey(Uint8Array.from(Buffer.from(process.env.KEY!, "base64")).slice(1));
+
+export const provider = new JsonRpcProvider(devnetConnection);
 
 export const signer = new RawSigner(keypair, provider);
 
+export const tx = new TransactionBlock();
+
 // ---------------------------------
 
-export const PACKAGE_ID = "0xaa7bec2916a66f5e4e4c49b9c35d8028589de6a7";
+export const PACKAGE_ID = "0xdc010c360f085ce8a095c3363eb9ac3c6f67fcb850096106383cba0512f6261d";
 
-export const MINT_CAP = "0x094e96346971ceaaedb17ae9a4bf0ab441cfc51d";
+export const ADMIN_CAP = "0xb9956996f46d92beef399863d15fc06753a31f4576e14c650e5c0cd764f8fe98";
 
-export const ADMIN_CAP = "0x6540a624e06376bf2844fd166c353d141d6e9b46";
+export const DISPENSER = "0xe1df932afaa907d8f429665a45159a888d533ea3b33af5eb2c449e8c51871d92";
 
-export const DISPENSER = "0x3c94ea6422bc907780358859864fca755089c71e";
+export const FUNDS = "0x75dac41c5de0fca70dbfecf84554e1e691f9631518dc6a4c7d7796ff1f4b42d9";
 
-export const FUNDS = "0x81678a4e1d6963e7fd597b2c03f9d9d8d93be6e0";
-
-// addr: 0x09e26bc2ba60b37e6f06f3961a919da18feb5a2b
+// addr: 0x4a3af36df1b20c8d79b31e50c07686c70d63310e4f9fff8d9f8b7f4eb703a2fd

@@ -1,14 +1,19 @@
-import { PACKAGE_ID, DISPENSER, signer, tx } from "../config";
+import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer, tx } from "../config";
 
 (async () => {
     console.log("running...");
 
     tx.moveCall({
-        target: `${PACKAGE_ID}::bottle::claim_filled_bottle`,
+        target: `${PACKAGE_ID}::bottle::set_batch`,
         typeArguments: [],
         arguments: [
+            tx.object(ADMIN_CAP),
             tx.object(DISPENSER),
-            tx.pure(3870),
+            tx.pure(true), // active
+            tx.pure(0), // start_timestamp
+            tx.pure(16804394690320), // end_timestamp
+            tx.pure(2000000), // price
+            tx.pure(1), // supply
         ]
     });
     tx.setGasBudget(10000);

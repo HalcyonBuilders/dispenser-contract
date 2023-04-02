@@ -3,3 +3,4 @@
 sui.log.*
 /contract/sui.log.*
 snippets/sui.log.*
+.env

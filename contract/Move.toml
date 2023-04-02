@@ -1,21 +1,17 @@
 [package]
 name = "dispenser"
 version = "1.0.0"
+# published_at = "0x0"
 
 [dependencies.Sui]
 git = "https://github.com/MystenLabs/sui.git"
-rev = "157ac72030d014f17d76cefe81f3915b4afab2c9"
-subdir = "crates/sui-framework"
-
-# a publier, puis inscrire l'adresse de l'objet dans le Move.toml (originmate)
-# [dependencies.Originmate]
-# git = "https://github.com/Origin-Byte/originmate.git"
-# rev = "1dd3d5a9a6e276e745fd5f488cfa7a322138d0ff"
-# local = "../../../originmate"
+rev = "82c9c80c11488858f1d3930f47ec9f335a566683"
+subdir = "crates/sui-framework/packages/sui-framework"
+# local = "../../../sui/crates/sui-framework"
 
 [dependencies.NftProtocol]
 git = "https://github.com/Origin-Byte/nft-protocol.git"
-rev = "f9d6edf9a6bb4bf958f38b904967e830949e53fd"
+rev = "47c70bc316292c05678d57f55ff3b3231572f7c4"
 # local = "../../../nft-protocol"
 
 [addresses]

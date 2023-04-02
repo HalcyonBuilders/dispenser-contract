@@ -1,17 +1,23 @@
-import { PACKAGE_ID, signer } from "../config";
+import { PACKAGE_ID, signer, tx } from "../config";
 
 (async () => {
     console.log("running...");
 
-    const moveCallTxn = await signer.executeMoveCall({
-        packageObjectId: PACKAGE_ID,
-        module: "bottle",
-        function: "register_wetlist",
+    tx.moveCall({
+        target: `${PACKAGE_ID}::bottle::register_wetlist`,
         typeArguments: [],
         arguments: [
-            "0x12371f6bd88ca278f6b1ea50149a806d136f889a",
-        ],
-        gasBudget: 10000
+            tx.pure("0x12371f6bd88ca278f6b1ea50149a806d136f889a"),
+        ]
     });
+    tx.setGasBudget(10000);
+    const moveCallTxn = await signer.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+        requestType: "WaitForLocalExecution",
+        options: {
+            showObjectChanges: true,
+        }
+    });
+
     console.log("moveCallTxn", moveCallTxn);
 })()

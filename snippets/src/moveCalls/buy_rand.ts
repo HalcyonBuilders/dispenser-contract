@@ -1,19 +1,25 @@
-import { PACKAGE_ID, MINT_CAP, DISPENSER, FUNDS, signer } from "../config";
+import { PACKAGE_ID, DISPENSER, signer, tx } from "../config";
 
 (async () => {
     console.log("running...");
 
-    const moveCallTxn = await signer.executeMoveCall({
-        packageObjectId: PACKAGE_ID,
-        module: "bottle",
-        function: "buy_random_bottle",
+    tx.moveCall({
+        target: `${PACKAGE_ID}::bottle::buy_random_bottle`,
         typeArguments: [],
         arguments: [
-            MINT_CAP,
-            DISPENSER,
-            FUNDS,
-        ],
-        gasBudget: 10000
+            tx.object(DISPENSER),
+            tx.gas,
+            tx.object("0x0000000000000000000000000000000000000000000000000000000000000006"),
+        ]
     });
+    tx.setGasBudget(10000);
+    const moveCallTxn = await signer.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+        requestType: "WaitForLocalExecution",
+        options: {
+            showObjectChanges: true,
+        }
+    });
+
     console.log("moveCallTxn", moveCallTxn);
 })()

@@ -4,11 +4,13 @@ import { PACKAGE_ID, DISPENSER, signer, tx } from "../config";
     console.log("running...");
 
     tx.moveCall({
-        target: `${PACKAGE_ID}::bottle::claim_filled_bottle`,
-        typeArguments: [],
+        target: `${PACKAGE_ID}::bottle::buy_random_bottle_with_coins`,
+        typeArguments: [
+            "0x2::sui::SUI"
+        ],
         arguments: [
             tx.object(DISPENSER),
-            tx.pure(3870),
+            tx.gas,
         ]
     });
     tx.setGasBudget(10000);

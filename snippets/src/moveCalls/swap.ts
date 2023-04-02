@@ -1,21 +1,26 @@
-import { PACKAGE_ID, ADMIN_CAP, signer, DISPENSER } from "../config";
+import { PACKAGE_ID, DISPENSER, signer, tx } from "../config";
 
 (async () => {
     console.log("running...");
 
-    const moveCallTxn = await signer.executeMoveCall({
-        packageObjectId: PACKAGE_ID,
-        module: "bottle",
-        function: "swap_monkey",
+    tx.moveCall({
+        target: `${PACKAGE_ID}::bottle::swap_nft`,
         typeArguments: [
-            "0x564fb6c97f3d098e8737fb8b13b6eaf7a6ca6784::bottle::BOTTLE"
+            `${PACKAGE_ID}::bottle::BOTTLE`
         ],
         arguments: [
-            ADMIN_CAP,
-            DISPENSER,
-            "0xeea459aa5cffcbc500fa02db95b20e15bcdde332",
-        ],
-        gasBudget: 10000
+            tx.object(DISPENSER),
+            tx.pure("0x20db8d95fd302cad47cafb32079aa7a4c45aee2e4412d53ca145cd6f6deafb4b"),
+        ]
     });
+    tx.setGasBudget(10000);
+    const moveCallTxn = await signer.signAndExecuteTransactionBlock({
+        transactionBlock: tx,
+        requestType: "WaitForLocalExecution",
+        options: {
+            showObjectChanges: true,
+        }
+    });
+
     console.log("moveCallTxn", moveCallTxn);
 })()
