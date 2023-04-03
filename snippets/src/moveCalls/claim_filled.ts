@@ -8,7 +8,7 @@ import { PACKAGE_ID, DISPENSER, signer, tx } from "../config";
         typeArguments: [],
         arguments: [
             tx.object(DISPENSER),
-            tx.pure(3870),
+            tx.pure(3149),
         ]
     });
     tx.setGasBudget(10000);

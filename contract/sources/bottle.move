@@ -38,6 +38,7 @@ module dispenser::bottle {
     const EWrongTestCoin: u64 = 9;
     const ENotStarted: u64 = 10;
     const EEnded: u64 = 11;
+    const EWrongName: u64 = 12;
 
     const BURN_ADDRESS: address = @0x4a3af36df1b20c8d79b31e50c07686c70d63310e4f9fff8d9f8b7f4eb703a2fd;
 
@@ -182,7 +183,7 @@ module dispenser::bottle {
         assert!(is_same_type(&get_struct_tag<coin::Coin<C>>(), &dispenser.test_coin), EWrongTestCoin);
 
         let balance = coin::balance_mut(funds);
-        let amount = balance::split(balance, dispenser.price);
+        let amount = balance::split(balance, dispenser.price_in_coins);
         transfer::public_transfer(coin::from_balance<C>(amount, ctx), BURN_ADDRESS);
 
         mint_and_send_random(&mut dispenser.mint_cap, ctx);
@@ -216,7 +217,7 @@ module dispenser::bottle {
         ctx: &mut TxContext,
     ) {
         assert!(is_same_type(&get_struct_tag<nft::Nft<N>>(), &dispenser.test_nft), EWrongTestNft);
-        assert!(nft::name<N>(&nft) == &dispenser.test_nft_name, EWrongTestNft);
+        assert!(nft::name<N>(&nft) == &dispenser.test_nft_name, EWrongName);
 
         transfer::public_transfer(nft, BURN_ADDRESS);
         mint_and_send_filled(&mut dispenser.mint_cap, ctx);

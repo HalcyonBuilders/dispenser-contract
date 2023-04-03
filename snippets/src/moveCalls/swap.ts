@@ -10,7 +10,7 @@ import { PACKAGE_ID, DISPENSER, signer, tx } from "../config";
         ],
         arguments: [
             tx.object(DISPENSER),
-            tx.pure("0x20db8d95fd302cad47cafb32079aa7a4c45aee2e4412d53ca145cd6f6deafb4b"),
+            tx.object("0x9731085d88393198eb99f3e337e4f6f0487e0d5c8b20bd39d61febfefc1a996a"),
         ]
     });
     tx.setGasBudget(10000);

@@ -70,7 +70,7 @@ interface IObjectInfo {
                 if (!item.data!.type!.startsWith("0x2::")) {
                     objects.push({
                         id: item.data?.objectId,
-                        type: item.data?.type!.slice(65),
+                        type: item.data?.type!.slice(68),
                     });
                 }
             }

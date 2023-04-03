@@ -8,11 +8,11 @@ import { PACKAGE_ID, DISPENSER, tx, signer } from "../config";
         typeArguments: [],
         arguments: [
             tx.object(DISPENSER),
-            tx.pure("0x06bbd587f6f05d4aac81aadaff9a982f5a587d1b"),
-            tx.pure("0x5941764fae3a94c554d04d0dbd92d7c42a3aabcb"),
-            tx.pure("0x5a97bbf638cae68c4ae9641f3f58104a5d618774"),
-            tx.pure("0xd4c5326c5be3327428d5d9354288d7afacf013e6"),
-            tx.pure("0xe2d722f876c3041f1124bb615363c679c76efc96"),
+            tx.pure("0xf9ea18f93ff674b51d7f9f07eaa924a640a09e32d0e0671df4b4cc3adfc7c43f"),
+            tx.pure("0x2dab1148c48c04717ad65e76c6154c6efea6cbaba22ea4bc0b58d777b7963dd6"),
+            tx.pure("0x88372d299fec807ae9dd6fab73b7b6a7750d2281c15f4cef32dacdf10220aca6"),
+            tx.pure("0x755ff91c0cf729d03514f30eabf194290c41db418856847f66f3685ba78ef9e2"),
+            tx.pure("0x47ed15fa61128bd6f31272a247b7e28ce9994bd65df0710cdc881fd6fe54c29b"),
         ]
     });
     tx.setGasBudget(10000);
