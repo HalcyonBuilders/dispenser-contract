@@ -7,6 +7,8 @@
     "deploy": "ts-node src/deploy.ts",
     "activate": "ts-node src/moveCalls/activate.ts",
     "deactivate": "ts-node src/moveCalls/deactivate.ts",
+    "give_filled": "ts-node src/moveCalls/give_filled.ts",
+    "give_random": "ts-node src/moveCalls/give_random.ts",
     "buy_rand": "ts-node src/moveCalls/buy_rand.ts",
     "buy_rand_coins": "ts-node src/moveCalls/buy_rand_coins.ts",
     "claim_rand": "ts-node src/moveCalls/claim_rand.ts",
@@ -40,6 +42,7 @@
     "typescript": "^4.9.4"
   },
   "dependencies": {
+    "@mysten/bcs": "^0.7.0",
     "@mysten/sui.js": "^0.30.0",
     "csv": "^6.2.6",
     "dotenv": "^16.0.3",

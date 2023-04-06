@@ -81,13 +81,13 @@ module dispenser::test_bottle {
     }
 
     #[test]
-    #[expected_failure(abort_code = bottles::ESaleInactive)]
+    #[expected_failure(abort_code = bottles::EEnded)]
     fun error_ended_buy_random_bottle() {
         buy_random_bottle(true, 0, 0, 1, 1, 1, 1);
     }
 
     #[test]
-    #[expected_failure(abort_code = bottles::ESaleInactive)]
+    #[expected_failure(abort_code = bottles::ENotStarted)]
     fun error_not_started_buy_random_bottle() {
         buy_random_bottle(true, 1, 10, 1, 1, 1, 1);
     }
