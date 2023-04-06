@@ -4,7 +4,7 @@ import { PACKAGE_ID, DISPENSER, signer, tx } from "../config";
     console.log("running...");
 
     tx.moveCall({
-        target: `${PACKAGE_ID}::bottle::swap_nft`,
+        target: `${PACKAGE_ID}::bottles::swap_nft`,
         typeArguments: [
             `${PACKAGE_ID}::bottle::BOTTLE`
         ],

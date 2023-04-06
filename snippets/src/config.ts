@@ -1,16 +1,16 @@
-import { Ed25519Keypair, JsonRpcProvider, RawSigner, devnetConnection, TransactionBlock } from "@mysten/sui.js";
+import { Ed25519Keypair, Connection, JsonRpcProvider, RawSigner, TransactionBlock } from "@mysten/sui.js";
 import dotenv from "dotenv";
 
-// export const connection = new Connection({
-//     fullnode: "https://testnet.artifact.systems/sui",
-//     faucet: "",
-// });
+export const testnetConnection = new Connection({
+    fullnode: "https://explorer-rpc.testnet.sui.io/",
+    faucet: "",
+});
 
 dotenv.config();
 
 export const keypair = Ed25519Keypair.fromSecretKey(Uint8Array.from(Buffer.from(process.env.KEY!, "base64")).slice(1));
 
-export const provider = new JsonRpcProvider(devnetConnection);
+export const provider = new JsonRpcProvider(testnetConnection);
 
 export const signer = new RawSigner(keypair, provider);
 
@@ -18,13 +18,13 @@ export const tx = new TransactionBlock();
 
 // ---------------------------------
 
-export const PACKAGE_ID = "0x5c62d45df7f770cb370aec4791f9afe7264362b8ec30f0dd917c1c18e7b693cd";
+export const PACKAGE_ID = "0xed54aeff9921b073f4036e9015b8913cc0f6235fca9ab20be92217901ac511c4";
 
-export const ADMIN_CAP = "0x751d07ba64d2212862534ed0746a97203fc939aecf39ab146e386831c2ca4ecf";
+export const ADMIN_CAP = "0xbaf0b55855fe60e3aebc823a02f5cbc5a93ba0ea6bb6b7d2ad3f4d6c7f885828";
 
-export const DISPENSER = "0xb86e25af4d4319555e4c1f431b2b7d13faa8d8e9b2d1771ee1c87684c0607a0b";
+export const DISPENSER = "0x882b9ffe1a1315a112621596d35dc7de8b54f8ecc63bf25cdf65c6d4d4bd3fd4";
 
-export const FUNDS = "0x75dac41c5de0fca70dbfecf84554e1e691f9631518dc6a4c7d7796ff1f4b42d9";
+export const COLLECTION = "0xfbdc3d8c86f57d8d29dc594fc1835076e93f0d1b6829455c6bd4aab119c33f13"
 
 // ethos addr: 0x4a3af36df1b20c8d79b31e50c07686c70d63310e4f9fff8d9f8b7f4eb703a2fd
 

@@ -4,7 +4,7 @@ import { PACKAGE_ID, signer, tx } from "../config";
     console.log("running...");
 
     tx.moveCall({
-        target: `${PACKAGE_ID}::bottle::register_wetlist`,
+        target: `${PACKAGE_ID}::bottles::register_wetlist`,
         typeArguments: [],
         arguments: [
             tx.object("0x09b9a77637cc1ec3ee9952a590f5d9d4cdb0a03dcb0177c5930eb1078d3acc44"),

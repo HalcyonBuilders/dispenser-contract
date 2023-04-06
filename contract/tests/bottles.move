@@ -8,7 +8,7 @@ module dispenser::test_bottle {
 
     use nft_protocol::nft;
 
-    use dispenser::bottle::{Self, Dispenser, AdminCap};
+    use dispenser::bottles::{Self, Dispenser, AdminCap};
 
     const EWrongBalance: u64 = 100;
     const ESetters: u64 = 101;
@@ -19,10 +19,11 @@ module dispenser::test_bottle {
 
     struct Coin has drop {}
 
+    #[test]
     fun init_scenario(): test::Scenario {
         let scenario = test::begin(ADMIN);
 
-        bottle::init_for_testing(test::ctx(&mut scenario));
+        bottles::init_for_testing(test::ctx(&mut scenario));
         clock::create_for_testing(test::ctx(&mut scenario));
 
         scenario
@@ -42,9 +43,9 @@ module dispenser::test_bottle {
         {
             // activate sale
             let dispenser = test::take_shared<Dispenser>(&scenario);
-            let admin_cap = test::take_from_address<AdminCap<bottle::BOTTLE>>(&scenario, ADMIN);
-            bottle::set_batch(&admin_cap, &mut dispenser, active, start_timestamp, end_timestamp, price, supply, test::ctx(&mut scenario));
-            test::return_to_address<AdminCap<bottle::BOTTLE>>(ADMIN, admin_cap);
+            let admin_cap = test::take_from_address<AdminCap<bottles::BOTTLES>>(&scenario, ADMIN);
+            bottles::set_batch(&admin_cap, &mut dispenser, active, start_timestamp, end_timestamp, price, price, supply, test::ctx(&mut scenario));
+            test::return_to_address<AdminCap<bottles::BOTTLES>>(ADMIN, admin_cap);
             test::return_shared<Dispenser>(dispenser);
         };
         test::next_tx(&mut scenario, BUYER);
@@ -54,8 +55,8 @@ module dispenser::test_bottle {
             clock::increment_for_testing(&mut clock, timestamp);
             let coins = coin::mint_for_testing<SUI>(sui, test::ctx(&mut scenario));
 
-            bottle::buy_random_bottle(&mut dispenser, &mut coins, &clock, test::ctx(&mut scenario));
-            assert!(bottle::get_dispenser_balance_value(&dispenser) == sui, 10);
+            bottles::buy_random_bottle(&mut dispenser, &mut coins, &clock, test::ctx(&mut scenario));
+            assert!(bottles::get_dispenser_balance_value(&dispenser) == sui, 10);
 
             transfer::public_transfer(coins, BUYER);
             test::return_shared<Dispenser>(dispenser);
@@ -63,7 +64,7 @@ module dispenser::test_bottle {
         };
         test::next_tx(&mut scenario, BUYER);
         {
-            assert!(test::has_most_recent_for_address<nft::Nft<bottle::BOTTLE>>(BUYER), 13);
+            assert!(test::has_most_recent_for_address<nft::Nft<bottles::BOTTLES>>(BUYER), 13);
         };
         test::end(scenario);
     }
@@ -74,31 +75,31 @@ module dispenser::test_bottle {
     }
 
     #[test]
-    #[expected_failure(abort_code = bottle::ESaleInactive)]
+    #[expected_failure(abort_code = bottles::ESaleInactive)]
     fun error_inactive_buy_random_bottle() {
         buy_random_bottle(false, 0, 10, 1, 1, 1, 1);
     }
 
     #[test]
-    #[expected_failure(abort_code = bottle::ESaleInactive)]
+    #[expected_failure(abort_code = bottles::ESaleInactive)]
     fun error_ended_buy_random_bottle() {
         buy_random_bottle(true, 0, 0, 1, 1, 1, 1);
     }
 
     #[test]
-    #[expected_failure(abort_code = bottle::ESaleInactive)]
+    #[expected_failure(abort_code = bottles::ESaleInactive)]
     fun error_not_started_buy_random_bottle() {
         buy_random_bottle(true, 1, 10, 1, 1, 1, 1);
     }
 
     #[test]
-    #[expected_failure(abort_code = bottle::ENoBottleLeft)]
+    #[expected_failure(abort_code = bottles::ENoBottleLeft)]
     fun error_no_left_buy_random_bottle() {
         buy_random_bottle(true, 0, 10, 1, 0, 1, 1);
     }
 
     #[test]
-    #[expected_failure(abort_code = bottle::EFundsInsufficient)]
+    #[expected_failure(abort_code = bottles::EFundsInsufficient)]
     fun error_funds_buy_random_bottle() {
         buy_random_bottle(true, 0, 10, 1, 1, 1, 0);
     }
@@ -128,9 +129,9 @@ module dispenser::test_bottle {
     //     };
     //     test::next_tx(scenario, buyer);
     //     {
-    //         assert!(test::has_most_recent_for_address<nft::Nft<bottle::BOTTLE>>(BUYER), 13);
-            // let filled = test::take_from_sender<nft::Nft<bottle::BOTTLE>>(&mut scenario);
-            // bottle::register_wetlist(filled, test::ctx(&mut scenario));
+    //         assert!(test::has_most_recent_for_address<nft::Nft<bottles::BOTTLE>>(BUYER), 13);
+            // let filled = test::take_from_sender<nft::Nft<bottles::BOTTLE>>(&mut scenario);
+            // bottles::register_wetlist(filled, test::ctx(&mut scenario));
     //     };
     //     test::end(scenario_val);
     // }

@@ -4,7 +4,7 @@ import { PACKAGE_ID, DISPENSER, signer, tx } from "../config";
     console.log("running...");
 
     tx.moveCall({
-        target: `${PACKAGE_ID}::bottle::claim_filled_bottle`,
+        target: `${PACKAGE_ID}::bottles::claim_filled_bottle`,
         typeArguments: [],
         arguments: [
             tx.object(DISPENSER),

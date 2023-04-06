@@ -4,7 +4,7 @@ import { PACKAGE_ID, ADMIN_CAP, signer, tx } from "../config";
     console.log("running...");
 
     tx.moveCall({
-        target: `${PACKAGE_ID}::bottle::transfer_admin_cap`,
+        target: `${PACKAGE_ID}::bottles::transfer_admin_cap`,
         typeArguments: [],
         arguments: [
             tx.object(ADMIN_CAP),

@@ -25,7 +25,7 @@ interface IObjectInfo {
     );
 
     try {
-        tx.setGasBudget(30000);
+        tx.setGasBudget(10000000);
 
         const [upgradeCap] = tx.publish(
             compiledModulesAndDeps.modules.map((m: any) => Array.from(fromB64(m))),

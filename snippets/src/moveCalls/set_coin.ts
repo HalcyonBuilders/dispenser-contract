@@ -4,7 +4,7 @@ import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer, tx } from "../config";
     console.log("running...");
 
     tx.moveCall({
-        target: `${PACKAGE_ID}::bottle::set_test_coin`,
+        target: `${PACKAGE_ID}::bottles::set_test_coin`,
         typeArguments: [],
         arguments: [
             tx.object(ADMIN_CAP),
@@ -12,7 +12,6 @@ import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer, tx } from "../config";
             tx.pure("194baba05589e135f9e35e65e360655deb2502695158e0c31bb5eecd2d53f0e7"), // gen1
             tx.pure("test_coin"), // gen2
             tx.pure("TEST_COIN"), // gen3
-            tx.pure(2000000), // price
         ]
     });
     tx.setGasBudget(10000);
