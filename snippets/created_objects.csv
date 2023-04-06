@@ -1,0 +1,3 @@
+type,id
+0x113ac6997e58c7e408e3360b5cd5284a2061127178ad95a0dc770c12da26c0ed,bottles::AdminCap<0x672d9c69ff785f0d2608c38f2e473f349132b260e2d06149e411d770f11a885a::bottles::BOTTLES>
+0xf2bb3258dafbadc27abe376ac5cfb00187da07eea03e0a6eb38ab48f227298ec,bottles::Dispenser

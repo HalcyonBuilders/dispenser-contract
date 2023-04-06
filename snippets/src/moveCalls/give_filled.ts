@@ -1,13 +1,14 @@
-import { PACKAGE_ID, tx, signer } from "../config";
+import { PACKAGE_ID, ADMIN_CAP, signer, tx } from "../config";
 
 (async () => {
     console.log("running...");
 
     tx.moveCall({
-        target: `${PACKAGE_ID}::bottles::claim_random_bottle`,
+        target: `${PACKAGE_ID}::bottles::give_filled_bottle`,
         typeArguments: [],
         arguments: [
-            tx.pure(3149),
+            tx.object(ADMIN_CAP),
+            tx.pure(""),
         ]
     });
     tx.setGasBudget(10000);

@@ -1,5 +1,4 @@
 module dispenser::bottles {
-    use std::option;
     use std::string;
     use std::vector;
     use std::hash;
@@ -15,13 +14,8 @@ module dispenser::bottles {
     use sui::transfer;
     use sui::tx_context::{Self, TxContext};
     use sui::package;
-    use sui::vec_set;
 
     use nft_protocol::nft::{Self, Nft};
-    use nft_protocol::creators;
-    use nft_protocol::mint_cap::{Self, MintCap};
-    use nft_protocol::collection::{Self};
-    use nft_protocol::display_info;
 
     use dispenser::parse;
 
@@ -59,6 +53,14 @@ module dispenser::bottles {
     struct Witness has drop {}
 
     // ========== objects ==========
+
+    struct Bottle has key, store {
+        id: UID,
+        name: string::String,
+        description: string::String,
+        image_url: url::Url,
+        project_url: url::Url,
+    }
     
     struct AdminCap<phantom BOTTLES> has key {id: UID}
 
@@ -75,7 +77,6 @@ module dispenser::bottles {
         test_nft: StructTag,
         test_nft_name: string::String,
         test_coin: StructTag,
-        mint_cap: MintCap<Nft<BOTTLES>>,
     }
 
     // ========== structs ==========
@@ -91,31 +92,7 @@ module dispenser::bottles {
 
     fun init(otw: BOTTLES, ctx: &mut TxContext) {
         let publisher = package::claim(otw, ctx);
-        // create collection
-        let collection = nft::create_collection<BOTTLES, Witness>(Witness {}, ctx);
-        // Creates an unregulated mint cap
-        let mint_cap = mint_cap::new(Witness {}, &collection, option::none(), ctx);
-
-        collection::add_domain(
-            Witness {},
-            &mut collection,
-            creators::new(vec_set::singleton(tx_context::sender(ctx)))
-        );
-        collection::add_domain(
-            Witness {},
-            &mut collection,
-            display_info::new(
-                string::utf8(b"Bottles"),
-                string::utf8(b"Filled and empty sui bottles earning you Wetlists for Thirsty Monkeys"),
-            ),
-        );
-        collection::add_domain(
-            Witness {},
-            &mut collection,
-            url::new_unsafe_from_bytes(b"https://halcyon.builders/dispenser"),
-        );
-
-        transfer::public_share_object(collection);
+        
         transfer::share_object(
             Dispenser{
                 id: object::new(ctx),
@@ -140,7 +117,6 @@ module dispenser::bottles {
                     struct_name: string::utf8(b""),
                     generics: vector::empty<string::String>(),
                 },
-                mint_cap,
             }
         );
         transfer::transfer(
@@ -157,11 +133,10 @@ module dispenser::bottles {
 
     public entry fun give_filled_bottle(
         _admin_cap: &AdminCap<BOTTLES>,
-        mint_cap: &mut MintCap<Nft<BOTTLES>>,
         recipient: address,
         ctx: &mut TxContext,
     ) {
-        let nft = mint_filled(mint_cap, ctx);
+        let nft = mint_filled(ctx);
         transfer::public_transfer(nft, recipient);
     }
 
@@ -180,7 +155,7 @@ module dispenser::bottles {
         balance::join(&mut dispenser.balance, amount);
 
         if (dispenser.supply != 0) dispenser.left = dispenser.left - 1;
-        mint_and_send_random(&mut dispenser.mint_cap, ctx);
+        mint_and_send_random(ctx);
     }
 
     public entry fun buy_random_bottle_with_coins<C>(
@@ -199,29 +174,27 @@ module dispenser::bottles {
         transfer::public_transfer(coin::from_balance<C>(amount, ctx), BURN_ADDRESS);
 
         if (dispenser.supply != 0) dispenser.left = dispenser.left - 1;
-        mint_and_send_random(&mut dispenser.mint_cap, ctx);
+        mint_and_send_random(ctx);
     }
 
     public entry fun claim_random_bottle(
-        dispenser: &mut Dispenser,
         magic_nb: u64,
         ctx: &mut TxContext,
     ) {
         // verification has role on discord
         assert_is_verified(magic_nb, ctx);
 
-        mint_and_send_random(&mut dispenser.mint_cap, ctx);
+        mint_and_send_random(ctx);
     }
 
     public entry fun claim_filled_bottle(
-        dispenser: &mut Dispenser,
         magic_nb: u64,
         ctx: &mut TxContext,
     ) {
         // verification has role on discord
         assert_is_verified(magic_nb, ctx);
 
-        mint_and_send_filled(&mut dispenser.mint_cap, ctx);
+        mint_and_send_filled(ctx);
     }
 
     public entry fun swap_nft<N>(
@@ -233,16 +206,15 @@ module dispenser::bottles {
         assert!(nft::name<N>(&nft) == &dispenser.test_nft_name, EWrongName);
 
         transfer::public_transfer(nft, BURN_ADDRESS);
-        mint_and_send_filled(&mut dispenser.mint_cap, ctx);
+        mint_and_send_filled(ctx);
     }
 
     public entry fun recycle(
-        dispenser: &mut Dispenser,
-        b1: Nft<BOTTLES>,
-        b2: Nft<BOTTLES>,
-        b3: Nft<BOTTLES>,
-        b4: Nft<BOTTLES>,
-        b5: Nft<BOTTLES>,
+        b1: Bottle,
+        b2: Bottle,
+        b3: Bottle,
+        b4: Bottle,
+        b5: Bottle,
         ctx: &mut TxContext,
     ) {
         transfer::public_transfer(b1, BURN_ADDRESS);
@@ -251,14 +223,14 @@ module dispenser::bottles {
         transfer::public_transfer(b4, BURN_ADDRESS);
         transfer::public_transfer(b5, BURN_ADDRESS);
 
-        mint_and_send_random(&mut dispenser.mint_cap, ctx);
+        mint_and_send_random(ctx);
     }
 
     public entry fun register_wetlist(
-        filled: Nft<BOTTLES>, 
+        filled: Bottle, 
         ctx: &mut TxContext
     ) {
-        assert!(nft::name(&filled) == &string::utf8(b"Filled Bottle"), ENotFilled);
+        assert!(filled.name == string::utf8(b"Filled Bottle"), ENotFilled);
         transfer::public_transfer(filled, BURN_ADDRESS);
         // event to retrieve and save the address in the database
         event::emit(AddressRegistered{addr: tx_context::sender(ctx)});
@@ -267,46 +239,45 @@ module dispenser::bottles {
     // ========== private functions ==========
 
     fun mint_and_send_random(
-        mint_cap: &mut MintCap<Nft<BOTTLES>>,
         ctx: &mut TxContext,
     ) {
         let rand_nb = vector::borrow(&hash::sha3_256(vector::empty()), 0);
         if (*rand_nb < 1) {
-            mint_and_send_filled(mint_cap, ctx);
+            mint_and_send_filled(ctx);
         } else {
-            mint_and_send_empty(mint_cap, ctx);
+            mint_and_send_empty(ctx);
         };
     }
 
     fun mint_and_send_filled(
-        mint_cap: &mut MintCap<Nft<BOTTLES>>,
         ctx: &mut TxContext,
     ) { 
-        let nft = mint_filled(mint_cap, ctx);
+        let nft = mint_filled(ctx);
         transfer::public_transfer(nft, tx_context::sender(ctx));
     }
 
     fun mint_and_send_empty(
-        mint_cap: &mut MintCap<Nft<BOTTLES>>,
         ctx: &mut TxContext,
     ) {
-        let nft = mint_empty(mint_cap, ctx);
+        let nft = mint_empty(ctx);
         transfer::public_transfer(nft, tx_context::sender(ctx));
     }
 
     fun mint_filled(
-        mint_cap: &mut MintCap<Nft<BOTTLES>>,
         ctx: &mut TxContext,
-    ): Nft<BOTTLES> { 
+    ): Bottle { 
         let name = string::utf8(b"Filled Bottle");
-        let url = url::new_unsafe_from_bytes(b"https://i.postimg.cc/Rh0SbXhJ/Filled-Bottle.png");
         let description = string::utf8(b"This bottle filled with fresh water earns you a Wetlist, go burn it!");
+        let image_url = url::new_unsafe_from_bytes(b"https://i.postimg.cc/Rh0SbXhJ/Filled-Bottle.png");
+        let project_url = url::new_unsafe_from_bytes(b"https://halcyon.builders/dispenser");
 
-        let nft = nft::from_mint_cap<BOTTLES>(mint_cap, name, url, ctx);
-
-        nft::add_domain(Witness {}, &mut nft, display_info::new(name, description));
-        nft::add_domain(Witness {}, &mut nft, url);
-        nft::add_domain(Witness {}, &mut nft, mint_cap::collection_id(mint_cap));
+        let nft = Bottle {
+            id: object::new(ctx),
+            name,
+            description,
+            image_url,
+            project_url,
+        };
 
         let id = object::id(&nft);
 
@@ -319,18 +290,20 @@ module dispenser::bottles {
     }
 
     fun mint_empty(
-        mint_cap: &mut MintCap<Nft<BOTTLES>>,
         ctx: &mut TxContext,
-    ): Nft<BOTTLES> {
+    ): Bottle {
         let name = string::utf8(b"Empty Bottle");
         let description = string::utf8(b"This bottle is empty and is worth nothing, maybe you could recycle it?");
-        let url = url::new_unsafe_from_bytes(b"https://i.postimg.cc/tTxtnNpP/Empty-Bottle.png");
+        let image_url = url::new_unsafe_from_bytes(b"https://i.postimg.cc/tTxtnNpP/Empty-Bottle.png");
+        let project_url = url::new_unsafe_from_bytes(b"https://halcyon.builders/dispenser");
         
-        let nft = nft::from_mint_cap<BOTTLES>(mint_cap, name, url, ctx);
-    
-        nft::add_domain(Witness {}, &mut nft, display_info::new(name, description));
-        nft::add_domain(Witness {}, &mut nft, url);
-        nft::add_domain(Witness {}, &mut nft, mint_cap::collection_id(mint_cap));
+        let nft = Bottle {
+            id: object::new(ctx),
+            name,
+            description,
+            image_url,
+            project_url,
+        };
 
         let id = object::id(&nft);
 
