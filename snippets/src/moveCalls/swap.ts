@@ -6,11 +6,11 @@ import { PACKAGE_ID, DISPENSER, signer, tx } from "../config";
     tx.moveCall({
         target: `${PACKAGE_ID}::bottles::swap_nft`,
         typeArguments: [
-            `${PACKAGE_ID}::bottle::BOTTLE`
+            `${PACKAGE_ID}::bottles::BOTTLES`
         ],
         arguments: [
             tx.object(DISPENSER),
-            tx.object("0x9731085d88393198eb99f3e337e4f6f0487e0d5c8b20bd39d61febfefc1a996a"),
+            tx.object("0xc964d0fc26889112b2d3b121ab80aabb3b40bbc643d2da3496cd296969636e37"),
         ]
     });
     tx.setGasBudget(10000);

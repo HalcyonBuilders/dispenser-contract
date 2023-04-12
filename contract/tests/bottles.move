@@ -1,5 +1,7 @@
 #[test_only]
 module dispenser::test_bottle {
+    use std::vector;
+
     use sui::test_scenario as test;
     use sui::coin;
     use sui::sui::SUI;
@@ -67,6 +69,32 @@ module dispenser::test_bottle {
             assert!(test::has_most_recent_for_address<nft::Nft<bottles::BOTTLES>>(BUYER), 13);
         };
         test::end(scenario);
+    }
+
+    fun give_filled_bottles() {
+        let scenario = init_scenario();
+        test::next_tx(&mut scenario, ADMIN);
+        {
+            let addresses = vector::empty();
+            vector::push_back(&mut addresses, BUYER);
+            vector::push_back(&mut addresses, ADMIN);
+            let dispenser = test::take_shared<Dispenser>(&scenario);
+            let admin_cap = test::take_from_address<AdminCap<bottles::BOTTLES>>(&scenario, ADMIN);
+            bottles::give_filled_bottles(&admin_cap, &mut dispenser, addresses, test::ctx(&mut scenario));
+            test::return_to_address<AdminCap<bottles::BOTTLES>>(ADMIN, admin_cap);
+            test::return_shared<Dispenser>(dispenser);
+        };
+        test::next_tx(&mut scenario, BUYER);
+        {
+            assert!(test::has_most_recent_for_address<nft::Nft<bottles::BOTTLES>>(BUYER), 13);
+            assert!(test::has_most_recent_for_address<nft::Nft<bottles::BOTTLES>>(ADMIN), 13);
+        };
+        test::end(scenario);
+    }
+
+    #[test]
+    fun test_give_filled_bottles() {
+        give_filled_bottles();
     }
 
     #[test]

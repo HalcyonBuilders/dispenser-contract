@@ -10,10 +10,11 @@ import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer, tx } from "../config";
             tx.object(ADMIN_CAP),
             tx.object(DISPENSER),
             tx.pure(true), // active
-            tx.pure(1680506884155), // start_timestamp
-            tx.pure(16805065217550), // end_timestamp
-            tx.pure(0), // price
-            tx.pure(0), // price_in_coins
+            tx.pure(0), // start_timestamp
+            tx.pure(100000000000000), // end_timestamp
+            // tx.pure(1682071828000), // end_timestamp
+            tx.pure(100000000), // price
+            tx.pure(100000000000000), // price_in_coins
             tx.pure(1000), // supply
         ]
     });

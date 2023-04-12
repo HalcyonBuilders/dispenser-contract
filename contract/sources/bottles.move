@@ -167,6 +167,7 @@ module dispenser::bottles {
         while (i < nb) {
             let nft = mint_random(&mut dispenser.mint_cap, ctx);
             transfer::public_transfer(nft, vector::pop_back(&mut recipients));
+            i = i + 1;
         }
     }
 
@@ -180,6 +181,7 @@ module dispenser::bottles {
         while (i < nb) {
             let nft = mint_filled(&mut dispenser.mint_cap, ctx);
             transfer::public_transfer(nft, vector::pop_back(&mut recipients));
+            i = i + 1;
         }
     }
 

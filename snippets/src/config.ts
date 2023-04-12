@@ -18,13 +18,13 @@ export const tx = new TransactionBlock();
 
 // ---------------------------------
 
-export const PACKAGE_ID = "0xd67588ed780942a1fa85eff1e05cb9dfd2a201bf83203198a03193624f7ba230";
+export const PACKAGE_ID = "0x963aa152ca6e179565849b3e2267a407cedcae4afab100329a54ab440aecaac9";
 
-export const ADMIN_CAP = "0x5647f1d23ed8fc0a6582d241d773563f1639b7c6a262d303356c44f01a0d7b7b";
+export const ADMIN_CAP = "0xae0592db8aaa72cfac4e7687b3f9f11ec214d8d3cdf37516568d3fe57daacec6";
 
-export const DISPENSER = "0x384437e7143aaf1cc7a1da6d4abc55e041204a852866d096cb95f061994ea9f7";
+export const DISPENSER = "0x94db597bb6a9850acfc01f709d4e09783f91c0661a4ca3eb3d978e5e7afedc60";
 
-export const COLLECTION = "0x6b72e0274a15daa009f93413c7a6445bf5ad59c9cbc21d49fb58572632275f6c";
+export const COLLECTION = "0x27150120370befb9851d54813576bcce0ff7b637efc4e603ba9f10ff1d434f50";
 
 // ethos addr: 0x4a3af36df1b20c8d79b31e50c07686c70d63310e4f9fff8d9f8b7f4eb703a2fd
 

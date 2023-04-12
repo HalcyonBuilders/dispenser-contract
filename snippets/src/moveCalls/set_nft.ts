@@ -9,13 +9,13 @@ import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer, tx } from "../config";
         arguments: [
             tx.object(ADMIN_CAP),
             tx.object(DISPENSER),
-            tx.pure("0x49da9700dd1db4f99e46fdaad2b867d32e0adb068e162c33eeeed3ab1416ad09"), // package_id
+            tx.pure("0xa0e7500b1b8420f6e6d187d3f2f10b886ebc9d583f40754b4576ca9d3844b845"), // package_id
             tx.pure("nft"), // module_name
             tx.pure("Nft"), // struct_name
-            tx.pure("5c62d45df7f770cb370aec4791f9afe7264362b8ec30f0dd917c1c18e7b693cd"), // gen1 (sans 0x)
-            tx.pure("bottle"), // gen2
-            tx.pure("BOTTLE"), // gen3
-            tx.pure("Filled Bottle"), // name
+            tx.pure("963aa152ca6e179565849b3e2267a407cedcae4afab100329a54ab440aecaac9"), // gen1 (sans 0x)
+            tx.pure("bottles"), // gen2
+            tx.pure("BOTTLES"), // gen3
+            tx.pure("Not this"), // name
         ]
     });
     tx.setGasBudget(10000);
