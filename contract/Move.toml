@@ -4,15 +4,16 @@ version = "1.0.0"
 # published_at = "0x0"
 
 [dependencies.Sui]
-git = "https://github.com/MystenLabs/sui.git"
-rev = "82c9c80c11488858f1d3930f47ec9f335a566683"
-subdir = "crates/sui-framework/packages/sui-framework"
-# local = "../../../sui/crates/sui-framework"
+# git = "https://github.com/MystenLabs/sui.git"
+# subdir = "crates/sui-framework/packages/sui-framework"
+# testnet-0.30.0
+# rev = "de632da6adf673d746155a1624c60a761567c215"
+local = "../../../sui/crates/sui-framework/packages/sui-framework"
 
 [dependencies.NftProtocol]
-git = "https://github.com/Origin-Byte/nft-protocol.git"
-rev = "main"
-# local = "../../../nft-protocol"
+# git = "https://github.com/Origin-Byte/nft-protocol.git"
+# rev = "testnet"
+local = "../../../nft-protocol"
 
 [addresses]
 dispenser = "0x0"

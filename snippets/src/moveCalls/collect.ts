@@ -12,14 +12,16 @@ import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer, tx } from "../config";
             tx.pure("0x4a3af36df1b20c8d79b31e50c07686c70d63310e4f9fff8d9f8b7f4eb703a2fd")
         ]
     });
-    tx.setGasBudget(10000);
+    tx.setGasBudget(10000000);
     const moveCallTxn = await signer.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        requestType: "WaitForLocalExecution",
+        requestType: "WaitForEffectsCert",
         options: {
             showObjectChanges: true,
+            showEffects: true,
         }
     });
 
     console.log("moveCallTxn", moveCallTxn);
+    console.log("STATUS: ", moveCallTxn.effects?.status);
 })()

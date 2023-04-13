@@ -1,4 +1,4 @@
-import { fromB64, normalizeSuiObjectId, OwnedObjectRef, SuiTransactionBlockResponse } from "@mysten/sui.js";
+import { OwnedObjectRef, SuiTransactionBlockResponse } from "@mysten/sui.js";
 import { execSync } from "child_process";
 import * as fs from "fs";
 import { stringify } from "csv";
@@ -17,7 +17,7 @@ interface IObjectInfo {
     const packagePath = "/home/titouanmarchal/ThounyBreasty/Projects/Sui/Halcyon/Dispenser/contract";
     const address = keypair.getPublicKey().toSuiAddress();
 
-    const compiledModulesAndDeps = JSON.parse(
+    const { modules, dependencies } = JSON.parse(
         execSync(
             `${cliPath} move build --dump-bytecode-as-base64 --path ${packagePath}`,
             { encoding: "utf-8" }
@@ -25,14 +25,12 @@ interface IObjectInfo {
     );
 
     try {
-        tx.setGasBudget(10000000);
+        tx.setGasBudget(100000000);
 
-        const [upgradeCap] = tx.publish(
-            compiledModulesAndDeps.modules.map((m: any) => Array.from(fromB64(m))),
-            compiledModulesAndDeps.dependencies.map((addr: string) =>
-                normalizeSuiObjectId(addr),
-            ),
-        )
+        const [upgradeCap] = tx.publish({
+            modules,
+            dependencies,
+        });
 
         tx.transferObjects([upgradeCap], tx.pure(address));
 

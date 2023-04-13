@@ -8,9 +8,7 @@ module dispenser::test_bottle {
     use sui::transfer;
     use sui::clock;
 
-    use nft_protocol::nft;
-
-    use dispenser::bottles::{Self, Dispenser, AdminCap};
+    use dispenser::bottles::{Self, Dispenser, AdminCap, FilledBottle, EmptyBottle};
 
     const EWrongBalance: u64 = 100;
     const ESetters: u64 = 101;
@@ -26,7 +24,6 @@ module dispenser::test_bottle {
         let scenario = test::begin(ADMIN);
 
         bottles::init_for_testing(test::ctx(&mut scenario));
-        clock::create_for_testing(test::ctx(&mut scenario));
 
         scenario
     }
@@ -53,20 +50,20 @@ module dispenser::test_bottle {
         test::next_tx(&mut scenario, BUYER);
         {
             let dispenser = test::take_shared<Dispenser>(&scenario);
-            let clock = test::take_shared<clock::Clock>(&scenario);
-            clock::increment_for_testing(&mut clock, timestamp);
+            let clock = clock::create_for_testing(test::ctx(&mut scenario));
+            clock::set_for_testing(&mut clock, timestamp);
             let coins = coin::mint_for_testing<SUI>(sui, test::ctx(&mut scenario));
 
             bottles::buy_random_bottle(&mut dispenser, &mut coins, &clock, test::ctx(&mut scenario));
-            assert!(bottles::get_dispenser_balance_value(&dispenser) == sui, 10);
+            assert!(bottles::get_dispenser_balance_value(&dispenser) == sui, 100);
 
             transfer::public_transfer(coins, BUYER);
             test::return_shared<Dispenser>(dispenser);
-            test::return_shared<clock::Clock>(clock);
+            clock::destroy_for_testing(clock);
         };
         test::next_tx(&mut scenario, BUYER);
         {
-            assert!(test::has_most_recent_for_address<nft::Nft<bottles::BOTTLES>>(BUYER), 13);
+            assert!(test::has_most_recent_for_address<EmptyBottle>(BUYER), EHasNotNft);
         };
         test::end(scenario);
     }
@@ -80,14 +77,14 @@ module dispenser::test_bottle {
             vector::push_back(&mut addresses, ADMIN);
             let dispenser = test::take_shared<Dispenser>(&scenario);
             let admin_cap = test::take_from_address<AdminCap<bottles::BOTTLES>>(&scenario, ADMIN);
-            bottles::give_filled_bottles(&admin_cap, &mut dispenser, addresses, test::ctx(&mut scenario));
+            bottles::give_filled_bottles(&admin_cap, addresses, test::ctx(&mut scenario));
             test::return_to_address<AdminCap<bottles::BOTTLES>>(ADMIN, admin_cap);
             test::return_shared<Dispenser>(dispenser);
         };
         test::next_tx(&mut scenario, BUYER);
         {
-            assert!(test::has_most_recent_for_address<nft::Nft<bottles::BOTTLES>>(BUYER), 13);
-            assert!(test::has_most_recent_for_address<nft::Nft<bottles::BOTTLES>>(ADMIN), 13);
+            assert!(test::has_most_recent_for_address<FilledBottle>(BUYER), EHasNotNft);
+            assert!(test::has_most_recent_for_address<FilledBottle>(ADMIN), EHasNotNft);
         };
         test::end(scenario);
     }
@@ -109,13 +106,13 @@ module dispenser::test_bottle {
     }
 
     #[test]
-    #[expected_failure(abort_code = bottles::EEnded)]
+    #[expected_failure(abort_code = bottles::ESaleEnded)]
     fun error_ended_buy_random_bottle() {
         buy_random_bottle(true, 0, 0, 1, 1, 1, 1);
     }
 
     #[test]
-    #[expected_failure(abort_code = bottles::ENotStarted)]
+    #[expected_failure(abort_code = bottles::ESaleNotStarted)]
     fun error_not_started_buy_random_bottle() {
         buy_random_bottle(true, 1, 10, 1, 1, 1, 1);
     }

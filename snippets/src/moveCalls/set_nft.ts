@@ -18,14 +18,16 @@ import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer, tx } from "../config";
             tx.pure("Not this"), // name
         ]
     });
-    tx.setGasBudget(10000);
+    tx.setGasBudget(10000000);
     const moveCallTxn = await signer.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        requestType: "WaitForLocalExecution",
+        requestType: "WaitForEffectsCert",
         options: {
             showObjectChanges: true,
+            showEffects: true,
         }
     });
 
     console.log("moveCallTxn", moveCallTxn);
+    console.log("STATUS: ", moveCallTxn.effects?.status);
 })()

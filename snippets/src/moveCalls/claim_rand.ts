@@ -1,4 +1,4 @@
-import { PACKAGE_ID, DISPENSER, tx, signer } from "../config";
+import { PACKAGE_ID, tx, signer } from "../config";
 
 (async () => {
     console.log("running...");
@@ -7,18 +7,19 @@ import { PACKAGE_ID, DISPENSER, tx, signer } from "../config";
         target: `${PACKAGE_ID}::bottles::claim_random_bottle`,
         typeArguments: [],
         arguments: [
-            tx.object(DISPENSER),
             tx.pure(3149),
         ]
     });
-    tx.setGasBudget(10000);
+    tx.setGasBudget(10000000);
     const moveCallTxn = await signer.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        requestType: "WaitForLocalExecution",
+        requestType: "WaitForEffectsCert",
         options: {
             showObjectChanges: true,
+            showEffects: true,
         }
     });
 
     console.log("moveCallTxn", moveCallTxn);
+    console.log("STATUS: ", moveCallTxn.effects?.status);
 })()

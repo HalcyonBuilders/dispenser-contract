@@ -1,27 +1,22 @@
 module dispenser::bottles {
-    use std::option;
-    use std::string;
+    use std::string::{Self, String, utf8};
     use std::vector;
-    use std::hash;
 
+    use sui::math;
     use sui::address;
     use sui::sui::SUI;
     use sui::coin;
     use sui::clock;
+    use sui::display;
     use sui::event;
     use sui::balance::{Self, Balance};
     use sui::object::{Self, ID, UID};
     use sui::url;
-    use sui::transfer;
+    use sui::transfer::{public_transfer, transfer, public_share_object, share_object};
     use sui::tx_context::{Self, TxContext};
     use sui::package;
-    use sui::vec_set;
 
-    use nft_protocol::nft::{Self, Nft};
-    use nft_protocol::creators;
-    use nft_protocol::mint_cap::{Self, MintCap};
     use nft_protocol::collection::{Self};
-    use nft_protocol::display_info;
     use nft_protocol::witness;
 
     use dispenser::parse;
@@ -32,15 +27,12 @@ module dispenser::bottles {
     const EFundsInsufficient: u64 = 1;
     const ENotVerified: u64 = 2;
     const ENoBottleLeft: u64 = 3;
-    const ENotValidHexCharacter: u64 = 4;
-    const EWrongTestNft: u64 = 5;
-    const ENotFilled: u64 = 6;
-    const ESaleNotStarted: u64 = 7;
-    const ESaleEnded: u64 = 8;
-    const EWrongTestCoin: u64 = 9;
-    const ENotStarted: u64 = 10;
-    const EEnded: u64 = 11;
-    const EWrongName: u64 = 12;
+    const EWrongTestNft: u64 = 4;
+    const ESaleNotStarted: u64 = 5;
+    const ESaleEnded: u64 = 6;
+    const EWrongTestCoin: u64 = 7;
+    const EBadRange: u64 = 8;
+    const ETooFewBytes: u64 = 9;
 
     const BURN_ADDRESS: address = @0x4a3af36df1b20c8d79b31e50c07686c70d63310e4f9fff8d9f8b7f4eb703a2fd;
 
@@ -63,6 +55,20 @@ module dispenser::bottles {
     
     struct AdminCap<phantom BOTTLES> has key {id: UID}
 
+    struct EmptyBottle has key, store {
+        id: UID,
+        name: String,
+        description: String,
+        url: url::Url,
+    }
+
+    struct FilledBottle has key, store {
+        id: UID,
+        name: String,
+        description: String,
+        url: url::Url,
+    }
+
     struct Dispenser has key {
         id: UID,
         active: bool,
@@ -74,51 +80,57 @@ module dispenser::bottles {
         supply: u64,
         left: u64,
         test_nft: StructTag,
-        test_nft_name: string::String,
         test_coin: StructTag,
-        mint_cap: MintCap<BOTTLES>,
     }
 
     // ========== structs ==========
 
     struct StructTag has store, copy, drop {
         package_id: ID,
-        module_name: string::String,
-        struct_name: string::String,
-        generics: vector<string::String>, 
+        module_name: String,
+        struct_name: String,
+        generics: vector<String>, 
     }
 
     // ========== functions ==========
 
     fun init(otw: BOTTLES, ctx: &mut TxContext) {
         let publisher = package::claim(otw, ctx);
-        let delegated_witness = witness::from_witness(Witness {});
-        // create collection
-        let collection = collection::create<BOTTLES>(delegated_witness, ctx);
-        // Creates an unregulated mint cap
-        let mint_cap = mint_cap::new_from_publisher(&publisher, &collection, option::none(), ctx);
+        let sender = tx_context::sender(ctx);
 
+        let display = display::new<EmptyBottle>(&publisher, ctx);
+        display::add(&mut display, utf8(b"name"), utf8(b"{name}"));
+        display::add(&mut display, utf8(b"description"), utf8(b"{description}"));
+        display::add(&mut display, utf8(b"image_url"), utf8(b"{url}"));
+        display::update_version(&mut display);
+        public_transfer(display, sender);
+
+        let display = display::new<FilledBottle>(&publisher, ctx);
+        display::add(&mut display, utf8(b"name"), utf8(b"{name}"));
+        display::add(&mut display, utf8(b"description"), utf8(b"{description}"));
+        display::add(&mut display, utf8(b"image_url"), utf8(b"{url}"));
+        display::update_version(&mut display);
+        public_transfer(display, sender);
+
+        let empty_dw = witness::from_witness(Witness {});
+        let empty_collection = collection::create<EmptyBottle>(empty_dw, ctx);
         collection::add_domain(
-            delegated_witness,
-            &mut collection,
-            creators::new(vec_set::singleton(tx_context::sender(ctx)))
-        );
-        collection::add_domain(
-            delegated_witness,
-            &mut collection,
-            display_info::new(
-                string::utf8(b"Bottles"),
-                string::utf8(b"Filled and empty sui bottles earning you Wetlists for Thirsty Monkeys"),
-            ),
-        );
-        collection::add_domain(
-            delegated_witness,
-            &mut collection,
+            empty_dw,
+            &mut empty_collection,
             url::new_unsafe_from_bytes(b"https://halcyon.builders/dispenser"),
         );
+        public_share_object(empty_collection);
 
-        transfer::public_share_object(collection);
-        transfer::share_object(
+        let filled_dw = witness::from_witness(Witness {});
+        let filled_collection = collection::create<FilledBottle>(filled_dw, ctx);
+        collection::add_domain(
+            filled_dw,
+            &mut filled_collection,
+            url::new_unsafe_from_bytes(b"https://halcyon.builders/dispenser"),
+        );
+        public_share_object(filled_collection);
+
+        share_object(
             Dispenser{
                 id: object::new(ctx),
                 active: false,
@@ -131,56 +143,50 @@ module dispenser::bottles {
                 left: 0,
                 test_nft: StructTag {
                     package_id: object::id_from_address(@0x0),
-                    module_name: string::utf8(b""),
-                    struct_name: string::utf8(b""),
-                    generics: vector::empty<string::String>(),
+                    module_name: utf8(b""),
+                    struct_name: utf8(b""),
+                    generics: vector::empty<String>(),
                 },
-                test_nft_name: string::utf8(b""),
                 test_coin: StructTag {
                     package_id: object::id_from_address(@0x0),
-                    module_name: string::utf8(b""),
-                    struct_name: string::utf8(b""),
-                    generics: vector::empty<string::String>(),
+                    module_name: utf8(b""),
+                    struct_name: utf8(b""),
+                    generics: vector::empty<String>(),
                 },
-                mint_cap,
             }
         );
-        transfer::transfer(
+        transfer(
             AdminCap<BOTTLES> {
                 id: object::new(ctx),
             }, 
-            tx_context::sender(ctx)
+            sender
         );
 
-        transfer::public_transfer(publisher, tx_context::sender(ctx));
+        public_transfer(publisher, sender);
     }
 
     // ========== entry functions ==========
 
     public entry fun give_random_bottles(
         _admin_cap: &AdminCap<BOTTLES>,
-        dispenser: &mut Dispenser,
-        recipients: vector<address>,
+        receivers: vector<address>,
         ctx: &mut TxContext,
     ) {
-        let (i, nb) = (0, vector::length(&recipients));
+        let (i, nb) = (0, vector::length(&receivers));
         while (i < nb) {
-            let nft = mint_random(&mut dispenser.mint_cap, ctx);
-            transfer::public_transfer(nft, vector::pop_back(&mut recipients));
+            mint_and_send_random(vector::pop_back(&mut receivers), ctx);
             i = i + 1;
         }
     }
 
     public entry fun give_filled_bottles(
         _admin_cap: &AdminCap<BOTTLES>,
-        dispenser: &mut Dispenser,
-        recipients: vector<address>,
+        receivers: vector<address>,
         ctx: &mut TxContext,
     ) {
-        let (i, nb) = (0, vector::length(&recipients));
+        let (i, nb) = (0, vector::length(&receivers));
         while (i < nb) {
-            let nft = mint_filled(&mut dispenser.mint_cap, ctx);
-            transfer::public_transfer(nft, vector::pop_back(&mut recipients));
+            mint_and_send_filled(vector::pop_back(&mut receivers), ctx);
             i = i + 1;
         }
     }
@@ -200,7 +206,7 @@ module dispenser::bottles {
         balance::join(&mut dispenser.balance, amount);
 
         if (dispenser.supply != 0) dispenser.left = dispenser.left - 1;
-        mint_and_send_random(&mut dispenser.mint_cap, ctx);
+        mint_and_send_random(tx_context::sender(ctx), ctx);
     }
 
     public entry fun buy_random_bottle_with_coins<C>(
@@ -216,70 +222,65 @@ module dispenser::bottles {
 
         let balance = coin::balance_mut(funds);
         let amount = balance::split(balance, dispenser.price_in_coins);
-        transfer::public_transfer(coin::from_balance<C>(amount, ctx), BURN_ADDRESS);
+        public_transfer(coin::from_balance<C>(amount, ctx), BURN_ADDRESS);
 
         if (dispenser.supply != 0) dispenser.left = dispenser.left - 1;
-        mint_and_send_random(&mut dispenser.mint_cap, ctx);
+        mint_and_send_random(tx_context::sender(ctx), ctx);
     }
 
     public entry fun claim_random_bottle(
-        dispenser: &mut Dispenser,
         magic_nb: u64,
         ctx: &mut TxContext,
     ) {
         // verification has role on discord
         assert_is_verified(magic_nb, ctx);
 
-        mint_and_send_random(&mut dispenser.mint_cap, ctx);
+        mint_and_send_random(tx_context::sender(ctx), ctx);
     }
 
     public entry fun claim_filled_bottle(
-        dispenser: &mut Dispenser,
         magic_nb: u64,
         ctx: &mut TxContext,
     ) {
         // verification has role on discord
         assert_is_verified(magic_nb, ctx);
 
-        mint_and_send_filled(&mut dispenser.mint_cap, ctx);
+        mint_and_send_filled(tx_context::sender(ctx), ctx);
     }
 
-    public entry fun swap_nft<N>(
+    public entry fun swap_nft<N: key + store>(
         dispenser: &mut Dispenser,
-        nft: Nft<N>, 
+        nft: N,
         ctx: &mut TxContext,
     ) {
-        assert!(is_same_type(&get_struct_tag<Nft<N>>(), &dispenser.test_nft), EWrongTestNft);
-        assert!(nft::name<N>(&nft) == &dispenser.test_nft_name, EWrongName);
+        assert!(is_same_type(&get_struct_tag<N>(), &dispenser.test_nft), EWrongTestNft);
 
-        transfer::public_transfer(nft, BURN_ADDRESS);
-        mint_and_send_filled(&mut dispenser.mint_cap, ctx);
+        public_transfer(nft, BURN_ADDRESS);
+        mint_and_send_filled(tx_context::sender(ctx), ctx);
     }
 
     public entry fun recycle(
-        dispenser: &mut Dispenser,
-        b1: Nft<BOTTLES>,
-        b2: Nft<BOTTLES>,
-        b3: Nft<BOTTLES>,
-        b4: Nft<BOTTLES>,
-        b5: Nft<BOTTLES>,
+        b1: EmptyBottle,
+        b2: EmptyBottle,
+        b3: EmptyBottle,
+        b4: EmptyBottle,
+        b5: EmptyBottle,
         ctx: &mut TxContext,
     ) {
-        transfer::public_transfer(b1, BURN_ADDRESS);
-        transfer::public_transfer(b2, BURN_ADDRESS);
-        transfer::public_transfer(b3, BURN_ADDRESS);
-        transfer::public_transfer(b4, BURN_ADDRESS);
-        transfer::public_transfer(b5, BURN_ADDRESS);
+        public_transfer(b1, BURN_ADDRESS);
+        public_transfer(b2, BURN_ADDRESS);
+        public_transfer(b3, BURN_ADDRESS);
+        public_transfer(b4, BURN_ADDRESS);
+        public_transfer(b5, BURN_ADDRESS);
 
-        mint_and_send_random(&mut dispenser.mint_cap, ctx);
+        mint_and_send_random(tx_context::sender(ctx), ctx);
     }
 
     public entry fun register_wetlist(
-        filled: Nft<BOTTLES>, 
+        filled: FilledBottle,
         ctx: &mut TxContext
     ) {
-        assert!(nft::name(&filled) == &string::utf8(b"Filled Bottle"), ENotFilled);
-        transfer::public_transfer(filled, BURN_ADDRESS);
+        public_transfer(filled, BURN_ADDRESS);
         // event to retrieve and save the address in the database
         event::emit(AddressRegistered{addr: tx_context::sender(ctx)});
     }
@@ -287,57 +288,31 @@ module dispenser::bottles {
     // ========== private functions ==========
 
     fun mint_and_send_random(
-        mint_cap: &mut MintCap<BOTTLES>,
+        receiver: address,
         ctx: &mut TxContext,
     ) { 
-        let nft = mint_random(mint_cap, ctx);
-        transfer::public_transfer(nft, tx_context::sender(ctx));
+        let rand_nb = random_from_range(0, 10, ctx);
+        if (rand_nb < 1) {
+            mint_and_send_filled(receiver, ctx);
+        } else {
+            mint_and_send_empty(receiver, ctx);
+        };
     }
 
     fun mint_and_send_filled(
-        mint_cap: &mut MintCap<BOTTLES>,
-        ctx: &mut TxContext,
-    ) { 
-        let nft = mint_filled(mint_cap, ctx);
-        transfer::public_transfer(nft, tx_context::sender(ctx));
-    }
-
-    fun mint_and_send_empty(
-        mint_cap: &mut MintCap<BOTTLES>,
+        receiver: address,
         ctx: &mut TxContext,
     ) {
-        let nft = mint_empty(mint_cap, ctx);
-        transfer::public_transfer(nft, tx_context::sender(ctx));
-    }
-
-    fun mint_random(
-        mint_cap: &mut MintCap<BOTTLES>,
-        ctx: &mut TxContext,
-    ): Nft<BOTTLES> {
-        let rand_nb = vector::borrow(&hash::sha3_256(vector::empty()), 0);
-        let nft;
-        if (*rand_nb < 1) {
-            nft = mint_filled(mint_cap, ctx);
-        } else {
-            nft = mint_empty(mint_cap, ctx);
-        };
-        nft
-    }
-
-    fun mint_filled(
-        mint_cap: &mut MintCap<BOTTLES>,
-        ctx: &mut TxContext,
-    ): Nft<BOTTLES> {
-        let delegated_witness = witness::from_witness<BOTTLES, Witness>(Witness {});
-        let name = string::utf8(b"Filled Bottle");
+        let name = utf8(b"Filled Bottle");
         let url = url::new_unsafe_from_bytes(b"https://i.postimg.cc/Rh0SbXhJ/Filled-Bottle.png");
-        let description = string::utf8(b"This bottle filled with fresh water earns you a Wetlist, go burn it!");
+        let description = utf8(b"This bottle filled with fresh water earns you a Wetlist, go burn it!");
 
-        let nft = nft::from_mint_cap<BOTTLES>(mint_cap, name, url, ctx);
-
-        nft::add_domain(delegated_witness, &mut nft, display_info::new(name, description));
-        nft::add_domain(delegated_witness, &mut nft, url);
-        nft::add_domain(delegated_witness, &mut nft, mint_cap::collection_id(mint_cap));
+        let nft = FilledBottle {
+            id: object::new(ctx),
+            name,
+            description,
+            url,
+        };
 
         let id = object::id(&nft);
 
@@ -346,24 +321,24 @@ module dispenser::bottles {
             is_filled: true,
         });
 
-        nft
+        public_transfer(nft, receiver);
     }
 
-    fun mint_empty(
-        mint_cap: &mut MintCap<BOTTLES>,
+    fun mint_and_send_empty(
+        receiver: address,
         ctx: &mut TxContext,
-    ): Nft<BOTTLES> {
-        let delegated_witness = witness::from_witness<BOTTLES, Witness>(Witness {});
-        let name = string::utf8(b"Empty Bottle");
-        let description = string::utf8(b"This bottle is empty and is worth nothing, maybe you could recycle it?");
+    ) {
+        let name = utf8(b"Empty Bottle");
+        let description = utf8(b"This bottle is empty and is worth nothing, maybe you could recycle it?");
         let url = url::new_unsafe_from_bytes(b"https://i.postimg.cc/tTxtnNpP/Empty-Bottle.png");
         
-        let nft = nft::from_mint_cap<BOTTLES>(mint_cap, name, url, ctx);
+        let nft = EmptyBottle {
+            id: object::new(ctx),
+            name,
+            description,
+            url,
+        };
     
-        nft::add_domain(delegated_witness, &mut nft, display_info::new(name, description));
-        nft::add_domain(delegated_witness, &mut nft, url);
-        nft::add_domain(delegated_witness, &mut nft, mint_cap::collection_id(mint_cap));
-
         let id = object::id(&nft);
 
         event::emit(RandomReceived{
@@ -371,7 +346,7 @@ module dispenser::bottles {
             is_filled: false,
         });
 
-        nft
+        public_transfer(nft, receiver);
     }
 
     // ========== admin setup functions ==========
@@ -401,7 +376,7 @@ module dispenser::bottles {
         receiver: address, 
         _ctx: &mut TxContext
     ) {
-        transfer::transfer(admin, receiver);
+        transfer(admin, receiver);
     }
 
     public entry fun activate_sale(
@@ -429,10 +404,9 @@ module dispenser::bottles {
         gen1: vector<u8>,
         gen2: vector<u8>,
         gen3: vector<u8>,
-        name: vector<u8>,
         _ctx: &mut TxContext
     ) {
-        let generics = string::utf8(gen1);
+        let generics = utf8(gen1);
         string::append_utf8(&mut generics, b"::");
         string::append_utf8(&mut generics, gen2);
         string::append_utf8(&mut generics, b"::");
@@ -440,12 +414,10 @@ module dispenser::bottles {
         
         dispenser.test_nft = StructTag {
             package_id,
-            module_name: string::utf8(module_name),
-            struct_name: string::utf8(struct_name),
+            module_name: utf8(module_name),
+            struct_name: utf8(struct_name),
             generics: vector[generics],
         };
-
-        dispenser.test_nft_name = string::utf8(name);
     }
 
     public entry fun set_test_coin(
@@ -456,7 +428,7 @@ module dispenser::bottles {
         gen3: vector<u8>,
         _ctx: &mut TxContext
     ) {
-        let generics = string::utf8(gen1);
+        let generics = utf8(gen1);
         string::append_utf8(&mut generics, b"::");
         string::append_utf8(&mut generics, gen2);
         string::append_utf8(&mut generics, b"::");
@@ -464,8 +436,8 @@ module dispenser::bottles {
 
         dispenser.test_coin = StructTag {
             package_id: object::id_from_address(@0x2),
-            module_name: string::utf8(b"coin"),
-            struct_name: string::utf8(b"Coin"),
+            module_name: utf8(b"coin"),
+            struct_name: utf8(b"Coin"),
             generics: vector[generics],
         };
     }
@@ -479,7 +451,7 @@ module dispenser::bottles {
         let amount = balance::value(&dispenser.balance);
         let profits = coin::take(&mut dispenser.balance, amount, ctx);
 
-        transfer::public_transfer(profits, receiver)
+        public_transfer(profits, receiver)
     }
 
     // ========== utils ==========
@@ -495,8 +467,8 @@ module dispenser::bottles {
     fun assert_is_active(dispenser: &Dispenser, clock: &clock::Clock) {
         assert!(dispenser.active, ESaleInactive);
         let time = clock::timestamp_ms(clock);
-        assert!(dispenser.start_timestamp < time, ENotStarted); 
-        assert!(dispenser.end_timestamp > time, EEnded);
+        assert!(dispenser.start_timestamp < time, ESaleNotStarted); 
+        assert!(dispenser.end_timestamp > time, ESaleEnded);
     }
 
     fun get_struct_tag<T>(): StructTag {
@@ -514,6 +486,30 @@ module dispenser::bottles {
 
     public fun get_dispenser_balance_value(dispenser: &Dispenser): u64 {
         balance::value(&dispenser.balance)
+    }
+
+    fun random_from_range(min: u64, max: u64, ctx: &mut TxContext): u64 {
+        assert!(max > min, EBadRange);
+
+        let uid = object::new(ctx);
+        let bytes = object::uid_to_bytes(&uid);
+        object::delete(uid);
+
+        let num = from_bytes(bytes);
+        num % (max - min) + min
+    }
+
+    fun from_bytes(bytes: vector<u8>): u64 {
+        assert!(vector::length(&bytes) >= 8, ETooFewBytes);
+
+        let i: u8 = 0;
+        let sum: u64 = 0;
+        while (i < 8) {
+            sum = sum + (*vector::borrow(&bytes, (i as u64)) as u64) * math::pow(2, (7 - i) * 8);
+            i = i + 1;
+        };
+
+        sum
     }
 
     #[test_only]
