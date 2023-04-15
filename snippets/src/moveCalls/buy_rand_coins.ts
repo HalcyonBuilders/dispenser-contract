@@ -6,18 +6,18 @@ import { PACKAGE_ID, DISPENSER, signer, tx } from "../config";
     tx.moveCall({
         target: `${PACKAGE_ID}::bottles::buy_random_bottle_with_coins`,
         typeArguments: [
-            "0x194baba05589e135f9e35e65e360655deb2502695158e0c31bb5eecd2d53f0e7::test_coin::TEST_COIN"
+            "0x1d981ebd7bbf06ac3a01fbe4c21dd5978e3ddeac802102ff31b2fc179f753047::test_coin::TEST_COIN"
         ],
         arguments: [
             tx.object(DISPENSER),
-            tx.object("0x261c972a719a4ec0aaef0ed6468d30f423c27dcf5011975552acc3e25fe7e1cb"),
+            tx.object("0xbb91eab2b717cd549eea68f86e3a70ac2c6796c8b52a0fab7f7420d33d6a00c2"),
             tx.object("0x0000000000000000000000000000000000000000000000000000000000000006"),
         ]
     });
     tx.setGasBudget(10000000);
     const moveCallTxn = await signer.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        requestType: "WaitForEffectsCert",
+        requestType: "WaitForLocalExecution",
         options: {
             showObjectChanges: true,
             showEffects: true,

@@ -17,7 +17,7 @@ import { PACKAGE_ID, tx, signer } from "../config";
     tx.setGasBudget(10000000);
     const moveCallTxn = await signer.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        requestType: "WaitForEffectsCert",
+        requestType: "WaitForLocalExecution",
         options: {
             showObjectChanges: true,
             showEffects: true,

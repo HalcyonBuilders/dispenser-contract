@@ -18,11 +18,11 @@ export const tx = new TransactionBlock();
 
 // ---------------------------------
 
-export const PACKAGE_ID = "0x733ec22595c116fc9cdb4d1a9073ac10c10fd7d366dc7359906c3c1527abdda7";
+export const PACKAGE_ID = "0x98c8b10337a98bc3f844253a6075e6db911948880346b989f6650364a09f76f0";
 
-export const ADMIN_CAP = "0x1f06167041b2a1b498793b1d4d310faeaf67d011d00f0f72aad61e3a3ffd065f";
+export const ADMIN_CAP = "0x08a57716ed0d4c965e5ae062f370f7a0e637ac4bcb017d26bca1f0013316b029";
 
-export const DISPENSER = "0xde11121d99da40e18398c4f20d2ad3b7da2c82316663e361be5ca296c861b0cf";
+export const DISPENSER = "0x3811685776bedf4af159128144edd470e7ba28a3878c6884bfe5c83ee4dda635";
 
 // export const COLLECTION = "0x27150120370befb9851d54813576bcce0ff7b637efc4e603ba9f10ff1d434f50";
 

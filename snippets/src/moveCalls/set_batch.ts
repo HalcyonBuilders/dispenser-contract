@@ -11,9 +11,8 @@ import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer, tx } from "../config";
             tx.object(DISPENSER),
             tx.pure(true), // active
             tx.pure(0), // start_timestamp
-            tx.pure(100000000000000), // end_timestamp
-            // tx.pure(1682071828000), // end_timestamp
-            tx.pure(100000000), // price
+            tx.pure(1683570800000), // end_timestamp
+            tx.pure(1000), // price
             tx.pure(100000000000000), // price_in_coins
             tx.pure(1000), // supply
         ]
@@ -21,7 +20,7 @@ import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer, tx } from "../config";
     tx.setGasBudget(10000000);
     const moveCallTxn = await signer.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        requestType: "WaitForEffectsCert",
+        requestType: "WaitForLocalExecution",
         options: {
             showObjectChanges: true,
             showEffects: true,

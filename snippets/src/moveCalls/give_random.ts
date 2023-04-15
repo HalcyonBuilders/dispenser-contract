@@ -4,8 +4,36 @@ import { PACKAGE_ID, ADMIN_CAP, signer, tx } from "../config";
     console.log("running...");
 
     const addresses = [
-        "0x4a3af36df1b20c8d79b31e50c07686c70d63310e4f9fff8d9f8b7f4eb703a2fd",
-        "0xfcd5f2eee4ca6d81d49c85a1669503b7fc8e641b406fe7cdb696a67ef861492c",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
     ];
 
     tx.moveCall({
@@ -16,10 +44,9 @@ import { PACKAGE_ID, ADMIN_CAP, signer, tx } from "../config";
             tx.pure(addresses),
         ],
     });
-    tx.setGasBudget(10000000);
     const moveCallTxn = await signer.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        requestType: "WaitForEffectsCert",
+        requestType: "WaitForLocalExecution",
         options: {
             showObjectChanges: true,
             showEffects: true,

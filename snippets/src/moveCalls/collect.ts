@@ -9,13 +9,13 @@ import { PACKAGE_ID, ADMIN_CAP, DISPENSER, signer, tx } from "../config";
         arguments: [
             tx.object(ADMIN_CAP),
             tx.object(DISPENSER),
-            tx.pure("0x4a3af36df1b20c8d79b31e50c07686c70d63310e4f9fff8d9f8b7f4eb703a2fd")
+            tx.pure("0xb242bbfb17bbb802e242fcf033bb9c33ae349a0c2b48c8cb6b9a079acc20432f")
         ]
     });
     tx.setGasBudget(10000000);
     const moveCallTxn = await signer.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        requestType: "WaitForEffectsCert",
+        requestType: "WaitForLocalExecution",
         options: {
             showObjectChanges: true,
             showEffects: true,

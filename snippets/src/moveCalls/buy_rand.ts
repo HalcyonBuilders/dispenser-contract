@@ -12,12 +12,12 @@ import { PACKAGE_ID, DISPENSER, signer, tx } from "../config";
             tx.object("0x0000000000000000000000000000000000000000000000000000000000000006"),
         ]
     });
-    tx.setGasBudget(10000000);
+    // tx.setGasBudget(10000000);
     const moveCallTxn = await signer.signAndExecuteTransactionBlock({
         transactionBlock: tx,
         requestType: "WaitForEffectsCert",
         options: {
-            showObjectChanges: true,
+            // showObjectChanges: true,
             showEffects: true,
         }
     });

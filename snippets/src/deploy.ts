@@ -39,7 +39,7 @@ interface IObjectInfo {
             options: {
                 showEffects: true,
             },
-            requestType: "WaitForEffectsCert"
+            requestType: "WaitForLocalExecution"
         });
         console.log("publishTb", JSON.stringify(publishTb, null, 2));
 
@@ -52,7 +52,6 @@ interface IObjectInfo {
             (item: OwnedObjectRef) => item.reference.objectId
         );
 
-        // wait(5000);
         const createdObjects = await provider.multiGetObjects({
             ids: createdObjectIds,
             options: { showContent: true, showType: true, showOwner: true }

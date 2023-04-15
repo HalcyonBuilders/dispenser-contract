@@ -407,10 +407,14 @@ module dispenser::bottles {
         _ctx: &mut TxContext
     ) {
         let generics = utf8(gen1);
-        string::append_utf8(&mut generics, b"::");
-        string::append_utf8(&mut generics, gen2);
-        string::append_utf8(&mut generics, b"::");
-        string::append_utf8(&mut generics, gen3);
+        if (!vector::is_empty(&gen1) && !vector::is_empty(&gen2)) {
+            string::append_utf8(&mut generics, b"::");
+            string::append_utf8(&mut generics, gen2);
+            if (!vector::is_empty(&gen3)) {
+                string::append_utf8(&mut generics, b"::");
+                string::append_utf8(&mut generics, gen3);
+            }
+        };
         
         dispenser.test_nft = StructTag {
             package_id,

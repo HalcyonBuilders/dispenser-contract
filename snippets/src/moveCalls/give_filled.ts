@@ -4,7 +4,7 @@ import { PACKAGE_ID, ADMIN_CAP, signer, tx } from "../config";
     console.log("running...");
 
     const addresses = [
-        "0xfcd5f2eee4ca6d81d49c85a1669503b7fc8e641b406fe7cdb696a67ef861492c",
+        "0xb95877ace060f46272b7caa8926e5e0966720e6d084e2456b9b9ed9a63594ef2",
     ];
 
     tx.moveCall({
@@ -18,7 +18,7 @@ import { PACKAGE_ID, ADMIN_CAP, signer, tx } from "../config";
     tx.setGasBudget(10000000);
     const moveCallTxn = await signer.signAndExecuteTransactionBlock({
         transactionBlock: tx,
-        requestType: "WaitForEffectsCert",
+        requestType: "WaitForLocalExecution",
         options: {
             showObjectChanges: true,
             showEffects: true,
